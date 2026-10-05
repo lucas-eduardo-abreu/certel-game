@@ -1,0 +1,16 @@
+{% load static %}<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#00a650">
+  <title>{% block titulo %}Certel Game{% endblock %}</title>
+  <link rel="icon" type="image/png" href="{% static 'jogo/img/mascote_cabeca.png' %}">
+  <link rel="stylesheet" href="{% static 'jogo/css/base.css' %}">
+  {% block estilos %}{% endblock %}
+</head>
+<body class="{% block classe_body %}{% endblock %}">
+{% block conteudo %}{% endblock %}
+{% block scripts %}{% endblock %}
+</body>
+</html>

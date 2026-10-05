@@ -1,0 +1,23 @@
+{% extends "jogo/base.html" %}
+{% load static %}
+{% block titulo %}Ranking — {{ titulo }}{% endblock %}
+{% block estilos %}<link rel="stylesheet" href="{% static 'jogo/css/ranking.css' %}">{% endblock %}
+{% block conteudo %}
+<main class="telao">
+  <aside class="telao-marca">
+    <h1 class="titulo-traco" id="telao-titulo">{{ titulo }}</h1>
+    <div class="telao-disco">
+      <img src="{% static 'jogo/img/mascote.png' %}" alt="Mascote da Certel">
+    </div>
+  </aside>
+  <section class="telao-lista">
+    <h2 class="titulo-traco">Ranking geral</h2>
+    <ol id="telao-ranking" aria-live="polite"></ol>
+    <p class="telao-aviso" id="telao-aviso" hidden>Reconectando…</p>
+  </section>
+</main>
+{% endblock %}
+{% block scripts %}
+<script>window.CERTEL_RANKING_URL = "{% url 'jogo:api-ranking' %}";</script>
+<script src="{% static 'jogo/js/ranking.js' %}"></script>
+{% endblock %}

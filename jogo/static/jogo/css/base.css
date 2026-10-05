@@ -1,0 +1,130 @@
+/* Base visual do Certel Game.
+   Identidade: o traço do mascote — contorno preto grosso, cores chapadas e
+   sombra dura — aplicado a toda a interface, sobre o verde e o azul da marca. */
+
+@font-face {
+  font-family: "Baloo 2";
+  src: url("../fonts/baloo2-latin.woff2") format("woff2");
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --verde: #00a650;
+  --verde-escuro: #007a3d;
+  --azul: #244a90;
+  --azul-escuro: #16305f;
+  --amarelo: #ffc20e;
+  --pele: #fff38a;
+  --perigo: #e4002b;
+  --branco: #ffffff;
+  --preto: #000000;
+  --asfalto: #a9b0c6;
+
+  --traco: 5px;
+  --sombra: 0 8px 0 var(--preto);
+  --raio: 28px;
+  --fonte: "Baloo 2", "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--fonte);
+  font-weight: 600;
+  color: var(--preto);
+  background: var(--azul-escuro);
+  -webkit-font-smoothing: antialiased;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+/* Botão "adesivo": contorno preto, sombra dura, afunda ao toque. */
+.botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 0 44px;
+  min-height: 104px;
+  border: var(--traco) solid var(--preto);
+  border-radius: 999px;
+  background: var(--amarelo);
+  box-shadow: var(--sombra);
+  font-size: 46px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.06s ease-out, box-shadow 0.06s ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.botao:active,
+.botao.pressionado {
+  transform: translateY(6px);
+  box-shadow: 0 2px 0 var(--preto);
+}
+
+.botao:focus-visible {
+  outline: 6px solid var(--branco);
+  outline-offset: 4px;
+}
+
+.botao[disabled] {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.botao-secundario {
+  background: var(--branco);
+  font-size: 38px;
+  min-height: 92px;
+  padding: 0 34px;
+}
+
+/* Título com o traço do mascote. */
+.titulo-traco {
+  margin: 0;
+  color: var(--branco);
+  font-weight: 800;
+  line-height: 0.92;
+  letter-spacing: -0.01em;
+  -webkit-text-stroke: 12px var(--preto);
+  paint-order: stroke fill;
+  text-shadow: 0 8px 0 var(--preto);
+}
+
+.adesivo {
+  background: var(--branco);
+  border: var(--traco) solid var(--preto);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

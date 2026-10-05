@@ -1,0 +1,8 @@
+Django>=5.2,<5.3
+djangorestframework>=3.16,<4
+django-jazzmin>=3.0,<4
+python-decouple>=3.8,<4
+dj-database-url>=3.0,<4
+whitenoise>=6.9,<7
+gunicorn>=23
+psycopg[binary]>=3.2,<4

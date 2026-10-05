@@ -1,0 +1,226 @@
+"""Modelos do jogo: totens, jogadores, partidas e configuração."""
+
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
+
+from core.models import AbstractBaseModel
+
+CONSENTIMENTO_PADRAO = (
+    "Autorizo o uso do meu nome e telefone para o ranking e para contato "
+    "sobre a premiação."
+)
+
+
+class Totem(AbstractBaseModel):
+    """Totem físico onde o jogo roda.
+
+    Cada totem tem um usuário próprio (``totem1``, ``totem2``...) que fica
+    logado no navegador durante o evento. As partidas ficam vinculadas ao
+    totem em que foram jogadas.
+
+    Attributes:
+        usuario: Usuário Django usado para o login do totem.
+        nome: Nome exibido no ranking e no admin (ex.: "Totem 1").
+        local: Onde o totem está instalado (opcional).
+        ativo: Totens inativos não conseguem iniciar partidas.
+    """
+
+    usuario = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="totem",
+        verbose_name="usuário",
+    )
+    nome = models.CharField("nome", max_length=40)
+    local = models.CharField("local", max_length=80, blank=True)
+    ativo = models.BooleanField("ativo", default=True)
+
+    class Meta:
+        verbose_name = "totem"
+        verbose_name_plural = "totens"
+        ordering = ["nome"]
+
+    def __str__(self):
+        """Retorna o nome do totem."""
+        return self.nome
+
+
+class Jogador(AbstractBaseModel):
+    """Pessoa que joga em um totem.
+
+    Quando o telefone é informado, ele identifica o jogador entre partidas:
+    quem joga de novo aparece uma única vez no ranking, com a melhor
+    pontuação.
+
+    Attributes:
+        nome: Nome informado no totem.
+        telefone: Telefone somente com dígitos (DDD + número), opcional.
+        aceite_lgpd: Se o jogador marcou o consentimento de uso dos dados.
+        aceite_em: Momento em que o consentimento foi dado.
+    """
+
+    nome = models.CharField("nome", max_length=40)
+    telefone = models.CharField("telefone", max_length=11, blank=True, db_index=True)
+    aceite_lgpd = models.BooleanField("aceitou o uso dos dados", default=False)
+    aceite_em = models.DateTimeField("aceite em", null=True, blank=True)
+
+    class Meta:
+        verbose_name = "jogador"
+        verbose_name_plural = "jogadores"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        """Retorna o nome do jogador."""
+        return self.nome
+
+    @property
+    def nome_publico(self):
+        """Nome exibido no ranking: primeiro nome e inicial do sobrenome.
+
+        Returns:
+            str: Ex.: "Maria Souza Lima" vira "Maria L.".
+        """
+        partes = self.nome.split()
+        if len(partes) > 1:
+            return f"{partes[0]} {partes[-1][0]}."
+        return self.nome
+
+    @property
+    def telefone_formatado(self):
+        """Telefone no formato (51) 99999-9999.
+
+        Returns:
+            str: Telefone formatado ou string vazia.
+        """
+        t = self.telefone
+        if len(t) < 10:
+            return t
+        return f"({t[:2]}) {t[2:-4]}-{t[-4:]}"
+
+
+class Partida(AbstractBaseModel):
+    """Uma rodada do jogo, do início ao envio da pontuação.
+
+    Attributes:
+        jogador: Quem jogou.
+        totem: Totem em que a partida aconteceu.
+        status: ``iniciada`` até a pontuação chegar; depois ``finalizada``.
+        pontuacao: Pontuação final.
+        itens_coletados: Quantidade de ícones Certel coletados.
+        perigos_atingidos: Quantidade de perigos em que o jogador encostou.
+        finalizada_em: Momento em que a pontuação foi registrada.
+        oculta: Partidas ocultas não aparecem no ranking (moderação).
+    """
+
+    class Status(models.TextChoices):
+        """Situações possíveis de uma partida."""
+
+        INICIADA = "iniciada", "Iniciada"
+        FINALIZADA = "finalizada", "Finalizada"
+
+    jogador = models.ForeignKey(
+        Jogador, on_delete=models.CASCADE, related_name="partidas", verbose_name="jogador"
+    )
+    totem = models.ForeignKey(
+        Totem, on_delete=models.PROTECT, related_name="partidas", verbose_name="totem"
+    )
+    status = models.CharField(
+        "status", max_length=10, choices=Status.choices, default=Status.INICIADA
+    )
+    pontuacao = models.PositiveIntegerField("pontuação", default=0)
+    itens_coletados = models.PositiveIntegerField("ícones coletados", default=0)
+    perigos_atingidos = models.PositiveIntegerField("perigos atingidos", default=0)
+    finalizada_em = models.DateTimeField("finalizada em", null=True, blank=True)
+    oculta = models.BooleanField(
+        "oculta do ranking",
+        default=False,
+        help_text="Marque para tirar a partida do ranking (ex.: nome impróprio).",
+    )
+
+    class Meta:
+        verbose_name = "partida"
+        verbose_name_plural = "partidas"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(
+                fields=["status", "-pontuacao", "finalizada_em"], name="partida_ranking_idx"
+            ),
+        ]
+
+    def __str__(self):
+        """Retorna jogador e pontuação da partida."""
+        return f"{self.jogador} — {self.pontuacao} pts"
+
+
+class ConfiguracaoJogo(AbstractBaseModel):
+    """Ajustes do jogo editáveis pelo admin (registro único).
+
+    Attributes:
+        titulo: Nome do jogo exibido nos totens e no telão.
+        duracao_segundos: Duração de cada partida.
+        pontos_acerto: Pontos ganhos por ícone Certel coletado.
+        pontos_erro: Pontos perdidos por perigo atingido.
+        pedir_telefone: Se o totem pede telefone e consentimento.
+        texto_consentimento: Texto do consentimento exibido no cadastro.
+        tamanho_ranking: Quantas posições o ranking mostra.
+        som_ativo: Liga ou desliga os efeitos sonoros dos totens.
+    """
+
+    titulo = models.CharField("título do jogo", max_length=40, default="Corrida Certel")
+    duracao_segundos = models.PositiveSmallIntegerField(
+        "duração da partida (s)",
+        default=45,
+        validators=[MinValueValidator(15), MaxValueValidator(180)],
+    )
+    pontos_acerto = models.PositiveSmallIntegerField(
+        "pontos por ícone", default=100, validators=[MinValueValidator(1)]
+    )
+    pontos_erro = models.PositiveSmallIntegerField("pontos perdidos por perigo", default=100)
+    pedir_telefone = models.BooleanField(
+        "pedir telefone",
+        default=True,
+        help_text=(
+            "Com telefone, quem joga de novo aparece uma vez só no ranking, "
+            "com a melhor pontuação."
+        ),
+    )
+    texto_consentimento = models.TextField(
+        "texto do consentimento", default=CONSENTIMENTO_PADRAO, max_length=300
+    )
+    tamanho_ranking = models.PositiveSmallIntegerField(
+        "posições no ranking",
+        default=10,
+        validators=[MinValueValidator(3), MaxValueValidator(50)],
+    )
+    som_ativo = models.BooleanField("som ligado", default=True)
+
+    class Meta:
+        verbose_name = "configuração do jogo"
+        verbose_name_plural = "configuração do jogo"
+
+    def __str__(self):
+        """Retorna o título configurado."""
+        return self.titulo
+
+    def clean(self):
+        """Impede a criação de um segundo registro de configuração.
+
+        Raises:
+            ValidationError: Se já existir outra configuração.
+        """
+        if ConfiguracaoJogo.objects.exclude(pk=self.pk).exists():
+            raise ValidationError("Já existe uma configuração. Edite a existente.")
+
+    @classmethod
+    def carregar(cls):
+        """Retorna a configuração única, criando-a com os padrões se preciso.
+
+        Returns:
+            ConfiguracaoJogo: O registro de configuração.
+        """
+        configuracao = cls.objects.order_by("created_at").first()
+        if configuracao is None:
+            configuracao = cls.objects.create()
+        return configuracao

@@ -1,0 +1,147 @@
+{% extends "jogo/base.html" %}
+{% load static %}
+{% block titulo %}{{ configuracao.titulo }}{% endblock %}
+{% block estilos %}
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <link rel="stylesheet" href="{% static 'jogo/css/totem.css' %}">
+{% endblock %}
+{% block conteudo %}
+<div class="palco" id="palco">
+{% if not totem %}
+  <div class="sem-totem">
+    <p>Este usuário não está ligado a um totem ativo.<br>Entre com o login de um totem (ex.: totem1).</p>
+    <form method="post" action="{% url 'jogo:sair' %}">{% csrf_token %}<button class="botao" type="submit">Trocar de usuário</button></form>
+  </div>
+{% else %}
+
+  <!-- 1. Atração: tela de espera, toque em qualquer lugar para começar -->
+  <section class="tela tela-atracao ativa" data-tela="atracao">
+    <h1 class="titulo-traco atracao-titulo" data-titulo>{{ configuracao.titulo }}</h1>
+    <div class="disco"></div>
+    <div class="orbita" aria-hidden="true">
+      <img src="{% static 'jogo/img/icone_energia.png' %}" alt="">
+      <img src="{% static 'jogo/img/icone_geracao.png' %}" alt="">
+      <img src="{% static 'jogo/img/icone_lojas.png' %}" alt="">
+      <img src="{% static 'jogo/img/icone_servicos.png' %}" alt="">
+      <img src="{% static 'jogo/img/icone_lumen.png' %}" alt="">
+      <img src="{% static 'jogo/img/icone_comercializadora.png' %}" alt="">
+      <img src="{% static 'jogo/img/icone_estruturas.png' %}" alt="">
+    </div>
+    <img class="atracao-mascote" src="{% static 'jogo/img/mascote.png' %}" alt="Mascote da Certel">
+    <button class="botao atracao-botao" type="button" id="botao-jogar">Toque para jogar</button>
+    <ol class="podio" id="podio" aria-label="Primeiros do ranking geral"></ol>
+    <div class="canto-operador" id="canto-operador"></div>
+  </section>
+
+  <!-- 2. Cadastro do jogador, com teclado na tela -->
+  <section class="tela tela-cadastro" data-tela="cadastro">
+    <div class="cadastro-topo">
+      <img src="{% static 'jogo/img/mascote_cabeca.png' %}" alt="">
+      <h2 class="titulo-traco">Quem vai jogar?</h2>
+    </div>
+    <div class="campos">
+      <button class="campo adesivo ativo" type="button" data-campo="nome">
+        <span class="rotulo">Seu nome</span>
+        <span class="valor" data-vazio="Toque nas letras"></span>
+      </button>
+      <button class="campo adesivo" type="button" data-campo="telefone" data-telefone>
+        <span class="rotulo">Seu telefone com DDD</span>
+        <span class="valor" data-vazio="(51) 99999-9999"></span>
+      </button>
+      <button class="aceite" type="button" role="checkbox" aria-checked="false" id="aceite" data-telefone>
+        <span class="caixa"><svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5.5 5.5L20 6.5"/></svg></span>
+        <span data-consentimento>{{ configuracao.texto_consentimento }}</span>
+      </button>
+    </div>
+    <p class="cadastro-erro" id="cadastro-erro" role="alert"></p>
+    <div class="teclado" id="teclado"></div>
+    <div class="cadastro-acoes">
+      <button class="botao botao-secundario" type="button" id="cadastro-voltar">Voltar</button>
+      <button class="botao" type="button" id="cadastro-comecar">Começar</button>
+    </div>
+  </section>
+
+  <!-- 3. Como jogar -->
+  <section class="tela tela-instrucoes" data-tela="instrucoes">
+    <h2 class="titulo-traco instrucoes-titulo">Como jogar</h2>
+    <div class="regras">
+      <div class="regra regra-pegar adesivo">
+        <h3>Pegue os ícones <span class="valor-pontos">+<span data-pontos-acerto>{{ configuracao.pontos_acerto }}</span></span></h3>
+        <div class="fila">
+          <img src="{% static 'jogo/img/icone_energia.png' %}" alt="Energia">
+          <img src="{% static 'jogo/img/icone_estruturas.png' %}" alt="Estruturas de concreto">
+          <img src="{% static 'jogo/img/icone_geracao.png' %}" alt="Geração">
+          <img src="{% static 'jogo/img/icone_lojas.png' %}" alt="Lojas">
+          <img src="{% static 'jogo/img/icone_comercializadora.png' %}" alt="Comercializadora de energia">
+          <img src="{% static 'jogo/img/icone_servicos.png' %}" alt="Serviços">
+          <img src="{% static 'jogo/img/icone_lumen.png' %}" alt="Lumen Securitizadora">
+        </div>
+      </div>
+      <div class="regra regra-desviar adesivo">
+        <h3>Desvie dos perigos <span class="valor-pontos">−<span data-pontos-erro>{{ configuracao.pontos_erro }}</span></span></h3>
+        <div class="fila">
+          <img src="{% static 'jogo/img/perigo_curto.png' %}" alt="Curto-circuito">
+          <img src="{% static 'jogo/img/perigo_fio.png' %}" alt="Fio partido">
+          <img src="{% static 'jogo/img/perigo_pipa.png' %}" alt="Pipa na rede">
+        </div>
+      </div>
+      <div class="regra regra-mover adesivo">
+        <svg viewBox="0 0 120 84" aria-hidden="true"><g stroke="#000" stroke-width="5" stroke-linejoin="round"><circle cx="34" cy="42" r="30" fill="#244a90"/><circle cx="86" cy="42" r="30" fill="#244a90"/><path d="M44 28L22 42l22 14z" fill="#fff"/><path d="M76 28l22 14-22 14z" fill="#fff"/></g></svg>
+        <p>Arraste o dedo ou segure as setas para andar. Você tem <span data-duracao>{{ configuracao.duracao_segundos }}</span> segundos.</p>
+      </div>
+    </div>
+    <img class="instrucoes-mascote" src="{% static 'jogo/img/mascote.png' %}" alt="">
+    <button class="botao instrucoes-botao" type="button" id="instrucoes-jogar">Jogar</button>
+  </section>
+
+  <!-- 4. Jogo -->
+  <section class="tela tela-jogo" data-tela="jogo">
+    <canvas id="pista" width="720" height="1280"></canvas>
+    <div class="placar adesivo" id="placar"><span class="rotulo">Pontos</span><span class="numero" id="placar-numero">0</span></div>
+    <div class="tempo adesivo" id="tempo" role="timer" aria-label="Tempo restante"><div class="barra" id="tempo-barra"></div><div class="segundos" id="tempo-segundos"></div></div>
+    <button class="seta seta-esquerda" type="button" id="seta-esquerda" aria-label="Andar para a esquerda"><svg viewBox="0 0 24 24"><path d="M15.5 4L6 12l9.5 8z" fill="#fff" stroke="#000" stroke-width="1.6" stroke-linejoin="round"/></svg></button>
+    <button class="seta seta-direita" type="button" id="seta-direita" aria-label="Andar para a direita"><svg viewBox="0 0 24 24"><path d="M8.5 4L18 12l-9.5 8z" fill="#fff" stroke="#000" stroke-width="1.6" stroke-linejoin="round"/></svg></button>
+    <div class="contagem" id="contagem" aria-live="assertive"></div>
+  </section>
+
+  <!-- 5. Resultado e ranking geral -->
+  <section class="tela tela-resultado" data-tela="resultado">
+    <h2 class="titulo-traco resultado-titulo">Fim de jogo!</h2>
+    <div class="resultado-placar adesivo">
+      <img src="{% static 'jogo/img/mascote_cabeca.png' %}" alt="">
+      <div><span class="numero" id="resultado-numero">0</span><span class="unidade">pontos</span></div>
+    </div>
+    <p class="resultado-posicao" id="resultado-posicao"></p>
+    <ol class="lista-ranking adesivo" id="resultado-ranking" aria-label="Ranking geral"></ol>
+    <div class="resultado-acoes">
+      <button class="botao botao-secundario" type="button" id="resultado-encerrar">Encerrar</button>
+      <button class="botao" type="button" id="resultado-de-novo">Jogar de novo</button>
+    </div>
+  </section>
+
+  <!-- Menu do operador: 5 toques no canto superior esquerdo da tela de atração -->
+  <div class="operador" id="operador">
+    <div class="caixa adesivo">
+      <h2 data-nome-totem>{{ totem.nome }}</h2>
+      <p>Menu do operador</p>
+      <button class="botao" type="button" id="operador-tela-cheia">Tela cheia</button>
+      <button class="botao botao-secundario" type="button" id="operador-recarregar">Recarregar</button>
+      <form method="post" action="{% url 'jogo:sair' %}" id="operador-sair">{% csrf_token %}<button class="botao botao-secundario" type="submit">Sair do totem</button></form>
+      <button class="botao botao-secundario" type="button" id="operador-fechar">Fechar</button>
+    </div>
+  </div>
+{% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+{% if totem %}
+{{ configuracao|json_script:"configuracao" }}
+<script id="rotas" type="application/json">{"config": "{% url 'jogo:api-config' %}", "ranking": "{% url 'jogo:api-ranking' %}", "iniciar": "{% url 'jogo:api-iniciar' %}", "finalizar": "{% url 'jogo:api-finalizar' pk='00000000-0000-0000-0000-000000000000' %}"}</script>
+<script id="imagens" type="application/json">{"mascote": "{% static 'jogo/img/mascote_sprite.png' %}", "bons": ["{% static 'jogo/img/icone_energia.png' %}", "{% static 'jogo/img/icone_estruturas.png' %}", "{% static 'jogo/img/icone_geracao.png' %}", "{% static 'jogo/img/icone_lojas.png' %}", "{% static 'jogo/img/icone_comercializadora.png' %}", "{% static 'jogo/img/icone_servicos.png' %}", "{% static 'jogo/img/icone_lumen.png' %}"], "ruins": ["{% static 'jogo/img/perigo_curto.png' %}", "{% static 'jogo/img/perigo_fio.png' %}", "{% static 'jogo/img/perigo_pipa.png' %}"]}</script>
+<script src="{% static 'jogo/js/api.js' %}"></script>
+<script src="{% static 'jogo/js/som.js' %}"></script>
+<script src="{% static 'jogo/js/teclado.js' %}"></script>
+<script src="{% static 'jogo/js/motor.js' %}"></script>
+<script src="{% static 'jogo/js/totem.js' %}"></script>
+{% endif %}
+{% endblock %}

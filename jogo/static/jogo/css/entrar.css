@@ -1,0 +1,71 @@
+/* Login do totem (feito uma vez pelo operador). */
+
+body {
+  background: var(--verde);
+}
+
+.entrar {
+  min-height: 100%;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  padding: 24px;
+}
+
+.entrar img {
+  height: 150px;
+  margin-bottom: -18px;
+  position: relative;
+  z-index: 1;
+}
+
+.entrar form {
+  width: min(92vw, 440px);
+  display: grid;
+  gap: 8px;
+  padding: 34px 30px 30px;
+}
+
+.entrar h1 {
+  margin: 0 0 8px;
+  font-size: 40px;
+  line-height: 1;
+}
+
+.entrar label {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--azul);
+}
+
+.entrar input {
+  height: 60px;
+  padding: 0 16px;
+  margin-bottom: 10px;
+  border: 4px solid var(--preto);
+  border-radius: 16px;
+  font: inherit;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.entrar input:focus-visible {
+  outline: 5px solid var(--amarelo);
+  outline-offset: 2px;
+}
+
+.entrar .botao {
+  min-height: 76px;
+  margin-top: 8px;
+  font-size: 32px;
+}
+
+.entrar .erro {
+  margin: 0 0 6px;
+  padding: 8px 14px;
+  border: 3px solid var(--preto);
+  border-radius: 12px;
+  background: var(--perigo);
+  color: var(--branco);
+  font-size: 20px;
+}
