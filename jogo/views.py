@@ -1,8 +1,8 @@
 """Páginas do jogo: login, tela do totem, telão do ranking e roleta."""
 
 from django.contrib.auth.mixins import UserPassesTestMixin
-from django.contrib.auth.views import LoginView
-from django.shortcuts import redirect, resolve_url
+from django.contrib.auth.views import LoginView, LogoutView
+from django.shortcuts import redirect, render, resolve_url
 from django.views.generic import TemplateView
 
 from . import perfis
@@ -20,6 +20,26 @@ class EntrarView(LoginView):
     def get_default_redirect_url(self):
         """Manda admin para o admin, ranking para o telão e totem para o jogo."""
         return resolve_url(perfis.pagina_inicial(self.request.user))
+
+
+class SairView(LogoutView):
+    """Logout. Abrir ``/sair/`` no navegador mostra a confirmação; o POST desloga.
+
+    Assim dá para sair de qualquer tela digitando o endereço, sem achar o menu
+    do operador do totem.
+    """
+
+    http_method_names = ["get", "post", "options"]
+
+    def get(self, request, *args, **kwargs):
+        """Mostra a confirmação, ou manda para o login se ninguém estiver logado.
+
+        Returns:
+            HttpResponse: Página "Sair?" ou redirecionamento para o login.
+        """
+        if not request.user.is_authenticated:
+            return redirect("jogo:entrar")
+        return render(request, "jogo/sair.html")
 
 
 class PerfilMixin(UserPassesTestMixin):

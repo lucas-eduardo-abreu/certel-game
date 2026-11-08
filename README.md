@@ -181,8 +181,13 @@ Regras:
    sessão dura um ano.
 2. Deixe o navegador em modo quiosque, por exemplo:
    `chrome.exe --kiosk https://certel-game.onrender.com/`
-3. **Menu do operador:** cinco toques seguidos no canto superior esquerdo da
-   tela de espera. Tem tela cheia, recarregar e sair do totem.
+3. **Menu do operador:** cinco toques seguidos (em até 3 segundos) no canto
+   superior esquerdo da tela de espera ("Toque para jogar"). É o canto da
+   área do jogo: em monitor deitado, o canto da faixa verde, não o da tela.
+   Tem tela cheia, recarregar e sair do totem.
+4. **Sair sem o menu:** abra `/sair/` (ex.:
+   https://certel-game.onrender.com/sair/) e confirme. Vale para qualquer
+   login.
 
 A tela foi desenhada em retrato (720 × 1280) e escala sozinha para a
 resolução do totem. Em tela deitada o jogo fica centralizado.

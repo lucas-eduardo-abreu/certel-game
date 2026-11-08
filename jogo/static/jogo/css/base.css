@@ -183,3 +183,9 @@ button {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* Link com cara de botão (ex.: "Voltar ao admin" no menu do operador). */
+a.botao {
+  color: var(--preto);
+  text-decoration: none;
+}

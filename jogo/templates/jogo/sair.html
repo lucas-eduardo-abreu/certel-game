@@ -1,0 +1,17 @@
+{% extends "jogo/base.html" %}
+{% load static %}
+{% block titulo %}Sair{% endblock %}
+{% block estilos %}<link rel="stylesheet" href="{% static 'jogo/css/entrar.css' %}">{% endblock %}
+{% block conteudo %}
+<main class="entrar">
+  <img class="logo-certel" src="{% static 'jogo/img/logo_certel_branco.svg' %}" alt="Certel Cooperativa">
+  <img class="entrar-mascote" src="{% static 'jogo/img/mascote_cabeca.png' %}" alt="">
+  <form method="post" class="adesivo">
+    {% csrf_token %}
+    <h1>Sair?</h1>
+    <p class="sair-usuario">Conectado como <strong>{{ user.get_username }}</strong>.</p>
+    <button class="botao" type="submit">Sair</button>
+    <a class="botao botao-secundario" href="/">Voltar</a>
+  </form>
+</main>
+{% endblock %}

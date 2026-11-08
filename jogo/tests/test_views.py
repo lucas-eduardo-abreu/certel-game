@@ -60,6 +60,15 @@ class EntrarViewTest(TestCase):
         )
         self.assertContains(resposta, "Usuário ou senha incorretos")
 
+    def test_sair_pelo_endereco(self):
+        """Abrir /sair/ mostra a confirmação; sem login, vai para o login."""
+        self.client.force_login(criar_totem(1).usuario)
+        resposta = self.client.get(reverse("jogo:sair"))
+        self.assertContains(resposta, "Sair?")
+        self.assertContains(resposta, "totem1")
+        self.client.logout()
+        self.assertRedirects(self.client.get(reverse("jogo:sair")), reverse("jogo:entrar"))
+
     def test_sair(self):
         """Sair devolve o totem para o login."""
         self.client.force_login(criar_totem(1).usuario)
