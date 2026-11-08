@@ -15,10 +15,16 @@ class ConfiguracaoSerializer(serializers.ModelSerializer):
             "duracao_segundos",
             "pontos_acerto",
             "pontos_erro",
+            "itens_por_multiplicador",
+            "pontos_por_dobra",
+            "dobras_maximas",
+            "perigos_inicial",
+            "perigos_aumento",
             "pedir_telefone",
             "texto_consentimento",
             "tamanho_ranking",
             "som_ativo",
+            "musica_ativa",
         ]
 
 

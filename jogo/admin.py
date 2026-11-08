@@ -112,7 +112,16 @@ class PartidaAdmin(admin.ModelAdmin):
 class ConfiguracaoJogoAdmin(admin.ModelAdmin):
     """Admin da configuração única do jogo."""
 
-    list_display = ["titulo", "duracao_segundos", "pontos_acerto", "pontos_erro", "pedir_telefone"]
+    list_display = [
+        "titulo",
+        "duracao_segundos",
+        "pontos_acerto",
+        "pontos_erro",
+        "itens_por_multiplicador",
+        "pontos_por_dobra",
+        "dobras_maximas",
+        "pedir_telefone",
+    ]
 
     def has_add_permission(self, request):
         """Permite criar apenas se ainda não houver configuração."""

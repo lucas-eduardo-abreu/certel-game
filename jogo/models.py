@@ -8,8 +8,8 @@ from django.db import models
 from core.models import AbstractBaseModel
 
 CONSENTIMENTO_PADRAO = (
-    "Autorizo o uso do meu nome e telefone para o ranking e para contato "
-    "sobre a premiação."
+    "Autorizo o uso do meu nome para o ranking e o número de telefone para "
+    "contatos da cooperativa"
 )
 
 
@@ -109,7 +109,7 @@ class Partida(AbstractBaseModel):
         status: ``iniciada`` até a pontuação chegar; depois ``finalizada``.
         pontuacao: Pontuação final.
         itens_coletados: Quantidade de ícones Certel coletados.
-        perigos_atingidos: Quantidade de perigos em que o jogador encostou.
+        perigos_atingidos: Quantidade de obstáculos em que o jogador encostou.
         finalizada_em: Momento em que a pontuação foi registrada.
         oculta: Partidas ocultas não aparecem no ranking (moderação).
     """
@@ -131,7 +131,7 @@ class Partida(AbstractBaseModel):
     )
     pontuacao = models.PositiveIntegerField("pontuação", default=0)
     itens_coletados = models.PositiveIntegerField("ícones coletados", default=0)
-    perigos_atingidos = models.PositiveIntegerField("perigos atingidos", default=0)
+    perigos_atingidos = models.PositiveIntegerField("obstáculos atingidos", default=0)
     finalizada_em = models.DateTimeField("finalizada em", null=True, blank=True)
     oculta = models.BooleanField(
         "oculta do ranking",
@@ -161,11 +161,17 @@ class ConfiguracaoJogo(AbstractBaseModel):
         titulo: Nome do jogo exibido nos totens e no telão.
         duracao_segundos: Duração de cada partida.
         pontos_acerto: Pontos ganhos por ícone Certel coletado.
-        pontos_erro: Pontos perdidos por perigo atingido.
+        pontos_erro: Pontos perdidos por obstáculo atingido.
+        itens_por_multiplicador: Ícones seguidos para subir o multiplicador.
+        pontos_por_dobra: Pontos para a rua dobrar de velocidade.
+        dobras_maximas: Quantas vezes a velocidade pode dobrar.
+        perigos_inicial: Proporção de obstáculos no início da partida, em %.
+        perigos_aumento: Quanto essa proporção sobe a cada marca de pontos.
         pedir_telefone: Se o totem pede telefone e consentimento.
         texto_consentimento: Texto do consentimento exibido no cadastro.
         tamanho_ranking: Quantas posições o ranking mostra.
         som_ativo: Liga ou desliga os efeitos sonoros dos totens.
+        musica_ativa: Liga ou desliga a música durante a partida.
     """
 
     titulo = models.CharField("título do jogo", max_length=40, default="Corrida Certel")
@@ -177,7 +183,50 @@ class ConfiguracaoJogo(AbstractBaseModel):
     pontos_acerto = models.PositiveSmallIntegerField(
         "pontos por ícone", default=100, validators=[MinValueValidator(1)]
     )
-    pontos_erro = models.PositiveSmallIntegerField("pontos perdidos por perigo", default=100)
+    pontos_erro = models.PositiveSmallIntegerField("pontos perdidos por obstáculo", default=300)
+    itens_por_multiplicador = models.PositiveSmallIntegerField(
+        "ícones seguidos por multiplicador",
+        default=5,
+        validators=[MaxValueValidator(50)],
+        help_text=(
+            "A cada quantos ícones pegos em seguida o multiplicador sobe "
+            "(5: no 5º vira 2x, no 10º vira 3x). Encostar em um obstáculo zera. "
+            "Use 0 para desligar."
+        ),
+    )
+    pontos_por_dobra = models.PositiveIntegerField(
+        "pontos para dobrar a velocidade",
+        default=1000,
+        help_text=(
+            "A cada quantos pontos a rua dobra de velocidade "
+            "(1000: com 1000 fica 2x, com 2000 fica 4x) e a proporção de "
+            "obstáculos aumenta. Use 0 para desligar as duas coisas."
+        ),
+    )
+    dobras_maximas = models.PositiveSmallIntegerField(
+        "limite de dobras de velocidade",
+        default=2,
+        validators=[MaxValueValidator(4)],
+        help_text=(
+            "Quantas vezes a velocidade pode dobrar: 2 = até 4x, 3 = até 8x. "
+            "Acima de 2, os itens cruzam a tela em menos de meio segundo."
+        ),
+    )
+    perigos_inicial = models.PositiveSmallIntegerField(
+        "obstáculos no início (%)",
+        default=25,
+        validators=[MaxValueValidator(65)],
+        help_text="De cada 100 itens que aparecem, quantos são obstáculos no começo da partida.",
+    )
+    perigos_aumento = models.PositiveSmallIntegerField(
+        "aumento de obstáculos por marca (%)",
+        default=8,
+        validators=[MaxValueValidator(40)],
+        help_text=(
+            "Quanto a proporção de obstáculos sobe a cada marca de pontos acima "
+            "(8: 25% no início, 33% com 1000, 41% com 2000...). O teto é 65%."
+        ),
+    )
     pedir_telefone = models.BooleanField(
         "pedir telefone",
         default=True,
@@ -194,7 +243,8 @@ class ConfiguracaoJogo(AbstractBaseModel):
         default=10,
         validators=[MinValueValidator(3), MaxValueValidator(50)],
     )
-    som_ativo = models.BooleanField("som ligado", default=True)
+    som_ativo = models.BooleanField("efeitos sonoros ligados", default=True)
+    musica_ativa = models.BooleanField("música ligada", default=True)
 
     class Meta:
         verbose_name = "configuração do jogo"

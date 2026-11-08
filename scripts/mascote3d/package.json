@@ -1,0 +1,8 @@
+{
+  "name": "mascote3d",
+  "private": true,
+  "description": "Modelo 3D do mascote (de costas, correndo) usado para gerar a folha de sprites do jogo.",
+  "dependencies": {
+    "three": "0.160.0"
+  }
+}

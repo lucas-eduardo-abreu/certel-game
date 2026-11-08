@@ -24,8 +24,20 @@ body {
   text-align: center;
 }
 
+.telao-topo {
+  display: grid;
+  justify-items: center;
+  gap: 2.4vh;
+  position: relative;
+  z-index: 2;
+}
+
+.telao-topo .logo-certel {
+  width: min(34vh, 20vw);
+}
+
 .telao-marca h1 {
-  font-size: min(8.4vh, 6.2vw);
+  font-size: min(7.4vh, 5.2vw);
   -webkit-text-stroke-width: min(1.3vh, 12px);
   position: relative;
   z-index: 2;
@@ -179,6 +191,7 @@ body {
   }
 
   .telao-marca h1 { font-size: 6vh; }
+  .telao-topo .logo-certel { width: 26vh; }
   .telao-disco { display: none; }
   .telao-lista { padding: 2.4vh 4vw; }
   .telao-lista h2 { font-size: 5vh; }

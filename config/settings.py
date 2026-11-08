@@ -123,19 +123,6 @@ if not DEBUG and not TESTANDO:  # pragma: no cover
     SESSION_COOKIE_SECURE = SECURE_SSL_REDIRECT
     CSRF_COOKIE_SECURE = SECURE_SSL_REDIRECT
 
-# --- Logs ---------------------------------------------------------------
-# Manda tudo para o console, que é o que aparece nos logs do Render.
-# Sem isso, com DEBUG=False os erros 500 não seriam registrados.
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "handlers": {"console": {"class": "logging.StreamHandler"}},
-    "root": {"handlers": ["console"], "level": "WARNING"},
-    "loggers": {
-        "django": {"handlers": ["console"], "level": "INFO", "propagate": False},
-    },
-}
-
 # --- Django REST Framework ----------------------------------------------
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [

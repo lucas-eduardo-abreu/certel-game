@@ -44,12 +44,20 @@ body {
   text-align: center;
 }
 
+.atracao-logo {
+  position: absolute;
+  left: 50%;
+  top: 34px;
+  width: 250px;
+  transform: translateX(-50%);
+}
+
 .atracao-titulo {
   position: absolute;
-  left: 30px;
-  right: 30px;
-  top: 44px;
-  font-size: 112px;
+  left: 20px;
+  right: 20px;
+  top: 150px;
+  font-size: 92px;
 }
 
 /* O disco azul com aro branco vem dos próprios ícones da Certel. */
@@ -430,7 +438,7 @@ body {
 
 .regra h3 {
   margin: 0 0 14px;
-  font-size: 50px;
+  font-size: 35px;
   font-weight: 800;
   line-height: 1;
 }
@@ -442,7 +450,7 @@ body {
   border: 4px solid var(--preto);
   border-radius: 999px;
   color: var(--branco);
-  font-size: 38px;
+  font-size: 32px;
   vertical-align: 3px;
 }
 
@@ -457,7 +465,13 @@ body {
 
 .regra-pegar .fila img { width: 80px; height: 80px; }
 .regra-desviar .fila { gap: 22px; }
-.regra-desviar .fila img { width: 150px; height: 150px; }
+.regra-desviar .fila img { width: 116px; height: 116px; }
+
+.regra p.regra-nota {
+  margin-top: 10px;
+  font-size: 25px;
+  color: var(--azul);
+}
 
 .regra p {
   margin: 0;
@@ -474,12 +488,13 @@ body {
 }
 
 .regra-mover svg { flex: none; width: 130px; height: 91px; }
+.regra-mover p { font-size: 25px; }
 
 .instrucoes-mascote {
   position: absolute;
   left: 44px;
   bottom: 34px;
-  height: 330px;
+  height: 250px;
   filter: drop-shadow(0 8px 0 rgba(0, 0, 0, 0.3));
   pointer-events: none;
 }
@@ -542,6 +557,99 @@ body {
 @keyframes pulso-ruim {
   40% { transform: scale(0.94) rotate(-3deg); background: #ffd9df; }
 }
+
+/* Multiplicador: selo "2x" e as bolinhas da sequência até o próximo nível. */
+.combo {
+  position: absolute;
+  left: 24px;
+  top: 132px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 18px 6px 8px;
+  border-radius: 999px;
+}
+
+.combo-mult {
+  display: grid;
+  place-items: center;
+  min-width: 76px;
+  height: 54px;
+  padding: 4px 12px 0;
+  border: 4px solid var(--preto);
+  border-radius: 999px;
+  background: #e3e6ef;
+  font-size: 38px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.combo.ativo .combo-mult { background: var(--amarelo); }
+
+.combo-pontos {
+  display: flex;
+  gap: 7px;
+}
+
+.combo-pontos i {
+  width: 20px;
+  height: 20px;
+  border: 3px solid var(--preto);
+  border-radius: 50%;
+  background: var(--branco);
+}
+
+.combo-pontos i.cheio { background: var(--verde); }
+
+.combo.subiu { animation: combo-subiu 0.55s cubic-bezier(0.2, 1.6, 0.4, 1); }
+.combo.perdeu { animation: combo-perdeu 0.5s ease-out; }
+
+@keyframes combo-subiu {
+  30% { transform: scale(1.35) rotate(-4deg); background: var(--amarelo); }
+}
+
+@keyframes combo-perdeu {
+  20% { transform: translateX(-10px) rotate(-4deg); background: #ffd9df; }
+  45% { transform: translateX(10px) rotate(4deg); background: #ffd9df; }
+  70% { transform: translateX(-6px); }
+}
+
+/* Velocidade: uma seta acesa por nível (a primeira é a velocidade inicial). */
+.ritmo {
+  position: absolute;
+  right: 24px;
+  top: 112px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 54px;
+  padding: 0 20px;
+  border-radius: 999px;
+}
+
+.ritmo-rotulo {
+  padding-top: 3px;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--azul);
+  line-height: 1;
+}
+
+.ritmo-setas {
+  display: flex;
+  gap: 2px;
+}
+
+.ritmo-setas i {
+  width: 22px;
+  height: 28px;
+  background: #c5cadb;
+  clip-path: polygon(0 0, 45% 0, 100% 50%, 45% 100%, 0 100%, 55% 50%);
+}
+
+.ritmo-setas i.cheio { background: var(--azul); }
+.ritmo.maximo .ritmo-setas i.cheio { background: var(--perigo); }
+.ritmo.subiu { animation: combo-subiu 0.55s cubic-bezier(0.2, 1.6, 0.4, 1); }
 
 .tempo {
   position: absolute;

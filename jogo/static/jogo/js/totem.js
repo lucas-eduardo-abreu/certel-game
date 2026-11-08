@@ -68,8 +68,10 @@
     return Promise.all([
       carregarImagem(caminhos.mascote),
       Promise.all(caminhos.bons.map(carregarImagem)),
-      Promise.all(caminhos.ruins.map(carregarImagem))
-    ]).then(function (r) { return { mascote: r[0], bons: r[1], ruins: r[2] }; });
+      Promise.all(caminhos.ruins.map(carregarImagem)),
+      // Opcional: sem a folha de sprites, o jogo usa a ilustração de frente.
+      caminhos.corrida ? carregarImagem(caminhos.corrida).catch(function () { return null; }) : null
+    ]).then(function (r) { return { mascote: r[0], bons: r[1], ruins: r[2], corrida: r[3] }; });
   }
 
   /* ---------------- Palco ---------------- */
@@ -94,9 +96,15 @@
     $$('[data-pontos-acerto]').forEach(function (el) { el.textContent = config.pontos_acerto; });
     $$('[data-pontos-erro]').forEach(function (el) { el.textContent = config.pontos_erro; });
     $$('[data-duracao]').forEach(function (el) { el.textContent = config.duracao_segundos; });
+    $$('[data-itens-mult]').forEach(function (el) { el.textContent = config.itens_por_multiplicador; });
+    $$('[data-itens-mult-2]').forEach(function (el) { el.textContent = config.itens_por_multiplicador * 2; });
+    $$('[data-multiplicador]').forEach(function (el) { el.hidden = !config.itens_por_multiplicador; });
+    $$('[data-pontos-dobra]').forEach(function (el) { el.textContent = milhar(config.pontos_por_dobra); });
+    $$('[data-aceleracao]').forEach(function (el) { el.hidden = !config.pontos_por_dobra; });
     $$('[data-consentimento]').forEach(function (el) { el.textContent = config.texto_consentimento; });
     $$('[data-telefone]').forEach(function (el) { el.hidden = !config.pedir_telefone; });
     Som.ligar(config.som_ativo);
+    Som.ligarMusica(config.musica_ativa);
   }
 
   /* ---------------- Atração ---------------- */
@@ -124,6 +132,7 @@
   }
 
   function irParaAtracao() {
+    Som.musica.parar();
     estado.jogador = { nome: '', telefone: '', aceite: false };
     estado.partidaId = null;
     estado.ocupado = false;
@@ -229,6 +238,48 @@
     }
   }
 
+  function montarCombo() {
+    var passo = config.itens_por_multiplicador;
+    var pontos = $('#combo-pontos');
+    $('#combo').hidden = !passo;
+    pontos.textContent = '';
+    for (var i = 0; i < passo && passo <= 10; i++) { pontos.appendChild(document.createElement('i')); }
+  }
+
+  function atualizarCombo(sequencia, multiplicador, evento) {
+    var combo = $('#combo');
+    var passo = config.itens_por_multiplicador || 1;
+    $('#combo-mult').textContent = multiplicador + 'x';
+    combo.classList.toggle('ativo', multiplicador > 1);
+    $$('#combo-pontos i').forEach(function (ponto, indice) {
+      ponto.classList.toggle('cheio', indice < sequencia % passo);
+    });
+    combo.classList.remove('subiu', 'perdeu');
+    if (evento) {
+      void combo.offsetWidth; // reinicia a animação
+      combo.classList.add(evento);
+    }
+  }
+
+  function montarRitmo() {
+    var setas = $('#ritmo-setas');
+    $('#ritmo').hidden = !config.pontos_por_dobra || !config.dobras_maximas;
+    setas.textContent = '';
+    for (var i = 0; i <= config.dobras_maximas; i++) { setas.appendChild(document.createElement('i')); }
+  }
+
+  function atualizarRitmo(nivel, evento) {
+    var ritmo = $('#ritmo');
+    Som.musica.andamento(nivel);
+    $$('#ritmo-setas i').forEach(function (seta, indice) { seta.classList.toggle('cheio', indice <= nivel); });
+    ritmo.classList.toggle('maximo', nivel > 0 && nivel >= config.dobras_maximas);
+    ritmo.classList.remove('subiu');
+    if (evento === 'subiu') {
+      void ritmo.offsetWidth; // reinicia a animação
+      ritmo.classList.add('subiu');
+    }
+  }
+
   function atualizarTempo(restante, fracao) {
     $('#tempo-barra').style.transform = 'scaleX(' + fracao + ')';
     $('#tempo-segundos').textContent = Math.ceil(restante);
@@ -265,16 +316,27 @@
     motor.opcoes.duracao = config.duracao_segundos;
     motor.opcoes.pontosAcerto = config.pontos_acerto;
     motor.opcoes.pontosErro = config.pontos_erro;
+    motor.opcoes.itensPorMultiplicador = config.itens_por_multiplicador;
+    motor.opcoes.pontosPorDobra = config.pontos_por_dobra;
+    motor.opcoes.dobrasMaximas = config.dobras_maximas;
+    motor.opcoes.chancePerigoInicial = config.perigos_inicial / 100;
+    motor.opcoes.chancePerigoAumento = config.perigos_aumento / 100;
+    montarCombo();
+    montarRitmo();
     motor.ajustarResolucao(estado.escala);
     motor.preparar();
     atualizarPlacar(0, 0);
     atualizarTempo(config.duracao_segundos, 1);
     contagemRegressiva().then(function () {
-      if (estado.tela === 'jogo') { motor.iniciar(); }
+      if (estado.tela === 'jogo') {
+        motor.iniciar();
+        Som.musica.iniciar();
+      }
     });
   }
 
   function terminarJogo(resultado) {
+    Som.musica.parar();
     Som.fim();
     var contagem = $('#contagem');
     contagem.textContent = '';
@@ -547,6 +609,8 @@
       estado.imagens = imagens;
       estado.motor = new window.CertelMotor($('#pista'), imagens, {
         aoPontuar: atualizarPlacar,
+        aoSequencia: atualizarCombo,
+        aoVelocidade: atualizarRitmo,
         aoTempo: atualizarTempo,
         aoTerminar: terminarJogo
       });

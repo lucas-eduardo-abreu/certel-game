@@ -1,0 +1,73 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Mascote 3D — render de sprites</title>
+<body style="margin:0;background:#a9b0c6">
+<canvas id="tela"></canvas>
+<script type="module">
+import * as THREE from './node_modules/three/build/three.module.js';
+import { criarMascote, posar } from './mascote3d.js';
+
+// Logo oficial (versão para fundo azul) para as costas da camiseta. O recorte
+// do símbolo usa o azul da marca; aqui ele recebe o azul da camiseta, para o
+// recorte continuar "vazado" no tecido.
+const COR_CAMISA = '#0054a5';
+async function carregarLogo() {
+  const svg = (await (await fetch('../../jogo/static/jogo/img/logo_certel_fundo_azul.svg')).text())
+    .replaceAll('#004899', COR_CAMISA);
+  const imagem = new Image();
+  imagem.src = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+  await imagem.decode();
+  const tela = document.createElement('canvas');
+  tela.width = 1024;
+  tela.height = Math.round(1024 * imagem.naturalHeight / imagem.naturalWidth);
+  tela.getContext('2d').drawImage(imagem, 0, 0, tela.width, tela.height);
+  return tela;
+}
+
+// Tamanho do quadro final (o render é feito com o dobro e reduzido depois).
+const QUADRO_L = 384, QUADRO_A = 512, SUPER = 2;
+const VISTA_A = 12.0, VISTA_L = VISTA_A * QUADRO_L / QUADRO_A;
+const ELEVACAO = 30 * Math.PI / 180, MIRA_Y = 5.15;
+
+const renderer = new THREE.WebGLRenderer({
+  canvas: document.getElementById('tela'), alpha: true, antialias: true, preserveDrawingBuffer: true
+});
+renderer.setSize(QUADRO_L * SUPER, QUADRO_A * SUPER, false);
+renderer.setClearColor(0x000000, 0);
+
+const cena = new THREE.Scene();
+cena.add(new THREE.AmbientLight(0xffffff, 0.9));
+const sol = new THREE.DirectionalLight(0xffffff, 2.6);
+sol.position.set(-5, 9, 7);
+cena.add(sol);
+
+const camera = new THREE.OrthographicCamera(-VISTA_L / 2, VISTA_L / 2, VISTA_A / 2, -VISTA_A / 2, 0.1, 100);
+camera.position.set(0, MIRA_Y + 30 * Math.sin(ELEVACAO), 30 * Math.cos(ELEVACAO));
+camera.lookAt(0, MIRA_Y, 0);
+camera.updateMatrixWorld();
+camera.updateProjectionMatrix();
+
+const rig = criarMascote(THREE, { logo: await carregarLogo() });
+cena.add(rig.raiz);
+
+// Onde o ponto do chão sob o boneco cai dentro do quadro final (em px).
+const chao = new THREE.Vector3(0, 0, 0).project(camera);
+window.info = {
+  largura: QUADRO_L, altura: QUADRO_A, superamostragem: SUPER,
+  ancoraX: (chao.x * 0.5 + 0.5) * QUADRO_L,
+  ancoraY: (1 - (chao.y * 0.5 + 0.5)) * QUADRO_A
+};
+
+window.renderizar = function (fase) {
+  posar(rig, fase);
+  renderer.render(cena, camera);
+  return renderer.domElement.toDataURL('image/png');
+};
+
+// Aberto direto no navegador, mostra a corrida em tempo real.
+let inicio = performance.now();
+(function animar(agora) {
+  if (!window.semAnimacao) { window.renderizar(((agora - inicio) / 620) % 1); }
+  requestAnimationFrame(animar);
+})(inicio);
+</script>

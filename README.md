@@ -1,8 +1,59 @@
 # Certel Game
 
 Jogo para totens: o mascote da Certel corre por uma rua, pega os ícones da
-cooperativa (+100) e desvia dos perigos (−100). Cada totem tem seu login e
+cooperativa (+100) e desvia dos obstáculos (−300). Cada totem tem seu login e
 todas as pontuações entram em um ranking geral.
+
+## Pontuação
+
+- Cada ícone vale 100 pontos vezes o multiplicador.
+- O multiplicador sobe a cada 5 ícones pegos em seguida: os 5 primeiros valem
+  100, do 6º ao 10º valem 200 (2x), do 11º ao 15º valem 300 (3x) e assim por
+  diante, sem limite.
+- Encostar em um obstáculo tira 300 pontos e zera o multiplicador. A pontuação
+  não fica negativa.
+- Deixar um ícone passar não zera a sequência; só o obstáculo zera.
+
+Os três números (100, 300 e 5) são editáveis no admin.
+
+## Velocidade
+
+- A rua começa a 380 px/s e dobra de velocidade a cada 1.000 pontos: com
+  1.000 fica 2x, com 2.000 fica 4x.
+- Há um limite de dobras (padrão 2, ou seja, até 4x). Em 4x um item leva
+  cerca de meio segundo entre aparecer e chegar ao mascote; em 8x, um quarto
+  de segundo, o que já não dá tempo de reagir. O limite vai até 4 no admin.
+- O nível acompanha a pontuação atual: se um obstáculo derrubar o jogador para
+  baixo da marca, a rua desacelera.
+- Com a rua mais rápida os itens também vêm mais juntos no tempo (nunca menos
+  de 0,32 s entre dois) e o mascote anda mais rápido para os lados.
+
+"Pontos para dobrar a velocidade" e "limite de dobras" ficam no admin; 0 em
+qualquer um desliga a aceleração.
+
+## Obstáculos
+
+- No começo, 25% dos itens são obstáculos. A cada 1.000 pontos a proporção sobe
+  8 pontos percentuais: 33% com 1.000, 41% com 2.000, 49% com 3.000, até o
+  teto de 65% (a partir de 5.000).
+- Usa a mesma marca de pontos da velocidade e, como ela, acompanha a
+  pontuação atual: se o jogador cair de faixa, os obstáculos diminuem.
+- Mesmo no teto, nunca vêm três obstáculos seguidos nem dois itens seguidos na
+  mesma faixa, então sempre existe um caminho.
+
+"Obstáculos no início (%)" e "aumento de obstáculos por marca (%)" ficam no admin.
+No código e no banco os campos continuam com o nome antigo (`perigos_*`).
+
+## Som e música
+
+Tudo é sintetizado no navegador (`jogo/static/jogo/js/som.js`), sem arquivos
+de áudio. A música da partida é uma composição original de 8 compassos em
+laço, com melodia, baixo e percussão; o andamento sobe 12% a cada dobra de
+velocidade. Para trocar a melodia, edite `MELODIA` e `BAIXO` no início da
+seção de música. Efeitos e música têm chaves separadas no admin.
+
+O Chrome só libera áudio depois de um toque na tela; como a partida começa
+com toques, isso já acontece sozinho. Confira o volume do sistema do totem.
 
 Django 5.2 + DRF, Postgres em produção (SQLite local), jogo em canvas sem
 dependências de front-end.
@@ -75,8 +126,10 @@ tela de espera.
 ## Ajustes pelo admin
 
 Em **Configuração do jogo**: título, duração da partida, pontos por ícone,
-pontos perdidos por perigo, pedir ou não telefone, texto do consentimento,
-tamanho do ranking e som. Os totens pegam a mudança ao voltar para a tela de
+pontos perdidos por obstáculo, ícones seguidos por multiplicador (0 desliga),
+pontos para dobrar a velocidade e limite de dobras, proporção de obstáculos
+(inicial e aumento), efeitos sonoros e música,
+pedir ou não telefone, texto do consentimento, tamanho do ranking e som. Os totens pegam a mudança ao voltar para a tela de
 espera, sem recarregar.
 
 Em **Partidas**: a ação "Ocultar do ranking" tira uma partida do ranking
@@ -101,20 +154,69 @@ simples; não é um anti-trapaça completo, porque o jogo roda no navegador.
 Se a internet cair no fim da partida, o totem guarda a pontuação e reenvia
 quando a conexão voltar.
 
-## Trocar ícones, perigos e mascote
+## Trocar ícones, obstáculos e mascote
 
 Os arquivos ficam em `jogo/static/jogo/img/`:
 
 - `icone_*.png` — os 7 ícones da Certel (256 × 256, fundo transparente)
-- `perigo_*.png` — os 3 perigos (os `.svg` são os originais editáveis)
+- `perigo_*.png` — os 3 obstáculos (os `.svg` são os originais editáveis)
 - `mascote.png`, `mascote_sprite.png`, `mascote_cabeca.png`
+- `mascote_corrida.png` — folha de sprites do mascote correndo de costas
 
 Para trocar uma imagem, mantenha o nome do arquivo. Para mudar a quantidade,
 edite as listas no fim de `jogo/templates/jogo/totem.html` (bloco `imagens`).
 
-Velocidade, intervalo entre itens e chance de perigo ficam no topo de
-`jogo/static/jogo/js/motor.js`. Se baixar `INTERVALO_FINAL`, ajuste também
-`INTERVALO_MINIMO_ITENS` em `jogo/services.py`.
+O cenário (rua de cidade com quarteirões, prédios, cruzamentos e árvores) é
+desenhado por código em `motor.js`, na seção "Rua de cidade". As listas
+`QUARTEIROES`, `ARVORES_ESQ` e `ARVORES_DIR` definem os prédios e onde ficam
+as árvores; para pôr mais ou menos árvores, edite essas duas últimas.
+
+Velocidade, intervalo entre itens e chance de obstáculo ficam no topo de
+`jogo/static/jogo/js/motor.js`. `VELOCIDADE_BASE`, `PRIMEIRO_ITEM`,
+`ESPACAMENTO_ITENS` e `INTERVALO_MINIMO` têm cópia em `jogo/services.py` (é
+com eles que o servidor calcula a pontuação máxima): se mudar em um, mude no
+outro.
+
+## Mascote correndo de costas (3D)
+
+Durante a partida o mascote aparece de costas, correndo. A animação vem de um
+modelo 3D feito em three.js (`scripts/mascote3d/mascote3d.js`), renderizado
+em 16 quadros e salvo como folha de sprites em
+`jogo/static/jogo/img/mascote_corrida.png`. O jogo só usa a imagem pronta:
+não precisa de WebGL no totem.
+
+O modelo é uma releitura do desenho oficial em formas simples, não a arte da
+agência. O cabelo de costas segue o mascote de pelúcia: um bloco cheio e
+quadradinho cobrindo a nuca, por baixo do boné. Nas costas da camiseta vai o
+logo oficial (`logo_certel_fundo_azul.svg`). Nas telas de espera, cadastro e
+resultado continua a ilustração original.
+
+Para ver a corrida em tempo real, instale o three.js e sirva a raiz do projeto
+(o modelo lê o logo em `jogo/static/jogo/img/`):
+
+```cmd
+cd scripts\mascote3d
+npm install
+cd ..\..
+python -m http.server 8001
+```
+
+e acesse http://localhost:8001/scripts/mascote3d/render.html.
+
+Para gerar a folha de novo depois de mexer no modelo:
+
+```cmd
+pip install playwright pillow
+playwright install chromium
+python scripts\mascote3d\gerar_sprites.py
+```
+
+Para voltar ao mascote de frente, apague o trecho `"corrida": "..."` do bloco
+`imagens` em `jogo/templates/jogo/totem.html`.
+
+Se a agência entregar um modelo 3D ou uma sequência de quadros oficial, basta
+substituir `mascote_corrida.png` (grade 4 × 4, quadros de 384 × 512) e ajustar
+as constantes `SPRITE_*` em `motor.js`.
 
 ## Demonstração em arquivo único
 
@@ -148,7 +250,7 @@ jogo/
   management/commands/  preparar_ambiente
   static/jogo/js/       motor.js (jogo), totem.js (fluxo), teclado.js, som.js, api.js, ranking.js
   templates/jogo/       entrar.html, totem.html, ranking.html
-scripts/                gerador da demonstração
+scripts/                gerador da demonstração e modelo 3D do mascote (mascote3d/)
 ```
 
 | Rota | O que é |
@@ -162,4 +264,23 @@ scripts/                gerador da demonstração
 | `/api/partidas/<id>/finalizar/` | Registra a pontuação (totem) |
 | `/healthz/` | Health check do Render |
 
-A fonte Baloo 2 está em `jogo/static/jogo/fonts/` sob a licença SIL OFL.
+## Identidade visual (Manual de Marca)
+
+O jogo segue o Manual de Aplicação da Marca Certel (V01.2025):
+
+- **Cores:** Azul Certel `#004899` (Pantone 287) e Verde Certel `#04A64B`
+  (Pantone 347), em `jogo/static/jogo/css/base.css` e no cenário do jogo.
+- **Logo:** arquivos vetoriais recortados do próprio manual, em
+  `jogo/static/jogo/img/`: `logo_certel.svg` (fundo branco),
+  `logo_certel_fundo_azul.svg` (fundo azul) e `logo_certel_branco.svg`
+  (fundo verde). Aparece na tela de espera, no telão e no login, sempre sem
+  sombra, contorno, rotação ou distorção.
+- **Fonte:** Boston (Latinotype). É uma fonte paga e não vem no projeto. O
+  jogo usa a Boston quando ela está instalada no computador do totem (pesos
+  SemiBold, Bold e Heavy/Black); enquanto não estiver, usa a Montserrat, a
+  fonte de apoio do manual, que vem em `jogo/static/jogo/fonts/` (SIL OFL).
+
+Para embutir a Boston no projeto em vez de instalar em cada totem, coloque os
+arquivos `.woff2` em `jogo/static/jogo/fonts/` e troque, em `base.css`, os
+`local(...)` de cada peso por `url("../fonts/NOME-DO-ARQUIVO.woff2")`. A
+licença da Boston precisa cobrir uso web/embutido.

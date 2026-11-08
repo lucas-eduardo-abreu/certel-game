@@ -12,7 +12,12 @@ body {
   padding: 24px;
 }
 
-.entrar img {
+.entrar .logo-certel {
+  width: 220px;
+  margin-bottom: 28px;
+}
+
+.entrar .entrar-mascote {
   height: 150px;
   margin-bottom: -18px;
   position: relative;

@@ -58,7 +58,7 @@ def embutir_css(correspondencia):
         str: Bloco ``<style>`` com a fonte convertida em data URI.
     """
     css = (ESTATICOS / correspondencia.group(1)).read_text(encoding="utf-8")
-    css = css.replace("../fonts/baloo2-latin.woff2", data_uri("jogo/fonts/baloo2-latin.woff2"))
+    css = re.sub(r"\.\./fonts/([\w.\-]+\.woff2)", lambda c: data_uri(f"jogo/fonts/{c.group(1)}"), css)
     return f"<style>\n{css}\n</style>"
 
 

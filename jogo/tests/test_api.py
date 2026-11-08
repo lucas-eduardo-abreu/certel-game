@@ -62,6 +62,13 @@ class ConfiguracaoApiTest(BaseApiTest):
         self.assertEqual(dados["totem"], "Totem 1")
         self.assertEqual(dados["duracao_segundos"], 45)
         self.assertEqual(dados["pontos_acerto"], 100)
+        self.assertEqual(dados["pontos_erro"], 300)
+        self.assertEqual(dados["itens_por_multiplicador"], 5)
+        self.assertEqual(dados["pontos_por_dobra"], 1000)
+        self.assertEqual(dados["dobras_maximas"], 2)
+        self.assertEqual(dados["perigos_inicial"], 25)
+        self.assertEqual(dados["perigos_aumento"], 8)
+        self.assertTrue(dados["musica_ativa"])
         self.assertTrue(dados["pedir_telefone"])
 
 

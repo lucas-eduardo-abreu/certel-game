@@ -35,4 +35,4 @@ services:
       - key: ADMIN_USUARIO
         value: admin
       - key: TOTENS_QUANTIDADE
-        value: "3"
+        value: 3

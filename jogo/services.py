@@ -1,6 +1,5 @@
 """Regras de negócio do jogo: partidas, validação de pontuação e ranking."""
 
-import math
 import re
 
 from django.db import transaction
@@ -9,9 +8,13 @@ from django.utils import timezone
 
 from .models import ConfiguracaoJogo, Jogador, Partida
 
-# Menor intervalo entre itens que o motor do jogo usa (static/jogo/js/motor.js
-# trabalha com 0,45 s). Serve de teto para a pontuação aceita pelo servidor.
-INTERVALO_MINIMO_ITENS = 0.4
+# Cópia do ritmo do motor do jogo (static/jogo/js/motor.js). Serve para simular
+# uma partida perfeita e, daí, calcular a pontuação máxima aceita.
+VELOCIDADE_BASE = 380
+PRIMEIRO_ITEM = 0.6
+ESPACAMENTO_ITENS = 360
+INTERVALO_MINIMO = 0.32
+FOLGA_ITENS = 2
 
 # Folga, em segundos, entre o cronômetro do totem e o relógio do servidor.
 TOLERANCIA_SEGUNDOS = 3
@@ -48,14 +51,34 @@ def normalizar_nome(valor):
 def pontuacao_maxima(configuracao):
     """Calcula a maior pontuação possível em uma partida.
 
+    Simula a partida perfeita com as regras do motor: todo item é um ícone,
+    pego no instante em que aparece; o multiplicador sobe a cada
+    ``itens_por_multiplicador`` e a rua dobra de velocidade a cada
+    ``pontos_por_dobra``, o que encurta o intervalo entre os itens.
+
     Args:
         configuracao: Configuração do jogo em vigor.
 
     Returns:
         int: Teto de pontos, usado para barrar envios adulterados.
     """
-    itens = math.ceil(configuracao.duracao_segundos / INTERVALO_MINIMO_ITENS)
-    return itens * configuracao.pontos_acerto
+    passo = configuracao.itens_por_multiplicador
+    marca = configuracao.pontos_por_dobra
+    pontos, sequencia, instante = 0, 0, PRIMEIRO_ITEM
+
+    def coletar():
+        nonlocal pontos, sequencia
+        multiplicador = 1 + sequencia // passo if passo else 1
+        pontos += configuracao.pontos_acerto * multiplicador
+        sequencia += 1
+
+    while instante < configuracao.duracao_segundos:
+        coletar()
+        nivel = min(configuracao.dobras_maximas, pontos // marca) if marca else 0
+        instante += max(INTERVALO_MINIMO, ESPACAMENTO_ITENS / (VELOCIDADE_BASE * 2**nivel))
+    for _ in range(FOLGA_ITENS):
+        coletar()
+    return pontos
 
 
 @transaction.atomic

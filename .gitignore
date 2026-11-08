@@ -8,3 +8,4 @@ staticfiles/
 .coverage
 htmlcov/
 demo.html
+node_modules/

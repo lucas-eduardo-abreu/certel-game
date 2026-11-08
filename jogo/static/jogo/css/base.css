@@ -1,20 +1,66 @@
 /* Base visual do Certel Game.
    Identidade: o traço do mascote — contorno preto grosso, cores chapadas e
-   sombra dura — aplicado a toda a interface, sobre o verde e o azul da marca. */
+   sombra dura — aplicado a toda a interface, sobre o verde e o azul da marca.
+   Cores conforme o Manual de Aplicação da Marca Certel (V01.2025).
+
+   Fonte: Boston (Latinotype), que é paga. O jogo usa a Boston quando ela está
+   instalada no computador do totem; enquanto não estiver, usa a Montserrat,
+   fonte de apoio do manual da marca, que vem com o projeto (licença SIL OFL).
+   Para embutir a Boston no projeto em vez de instalar, veja o README. */
 
 @font-face {
-  font-family: "Baloo 2";
-  src: url("../fonts/baloo2-latin.woff2") format("woff2");
-  font-weight: 400 800;
+  font-family: "Boston";
+  src: local("Boston SemiBold"), local("Boston-SemiBold"), local("Boston Medium"), local("Boston-Medium");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Boston";
+  src: local("Boston Bold"), local("Boston-Bold");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Boston";
+  src: local("Boston Heavy"), local("Boston-Heavy"), local("Boston Black"), local("Boston-Black"), local("Boston ExtraBold"), local("Boston-ExtraBold");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Montserrat";
+  src: url("../fonts/montserrat-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Montserrat";
+  src: url("../fonts/montserrat-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Montserrat";
+  src: url("../fonts/montserrat-800.woff2") format("woff2");
+  font-weight: 800;
   font-style: normal;
   font-display: swap;
 }
 
 :root {
-  --verde: #00a650;
-  --verde-escuro: #007a3d;
-  --azul: #244a90;
-  --azul-escuro: #16305f;
+  --verde: #04a64b;          /* Verde Certel — Pantone 347 */
+  --verde-escuro: #04a64b;
+  --azul: #004899;           /* Azul Certel — Pantone 287 */
+  --azul-escuro: #004899;
   --amarelo: #ffc20e;
   --pele: #fff38a;
   --perigo: #e4002b;
@@ -25,7 +71,7 @@
   --traco: 5px;
   --sombra: 0 8px 0 var(--preto);
   --raio: 28px;
-  --fonte: "Baloo 2", "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+  --fonte: "Boston", "Montserrat", "Segoe UI", Arial, sans-serif;
 }
 
 *,
@@ -98,6 +144,15 @@ button {
   font-size: 38px;
   min-height: 92px;
   padding: 0 34px;
+}
+
+/* Logo oficial: sem sombra, contorno, rotação ou distorção (Manual de Marca).
+   Só se define a largura; a altura acompanha a proporção do arquivo. */
+.logo-certel {
+  display: block;
+  height: auto;
+  filter: none;
+  pointer-events: none;
 }
 
 /* Título com o traço do mascote. */

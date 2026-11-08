@@ -4,7 +4,8 @@
 {% block estilos %}<link rel="stylesheet" href="{% static 'jogo/css/entrar.css' %}">{% endblock %}
 {% block conteudo %}
 <main class="entrar">
-  <img src="{% static 'jogo/img/mascote_cabeca.png' %}" alt="">
+  <img class="logo-certel" src="{% static 'jogo/img/logo_certel_branco.svg' %}" alt="Certel Cooperativa">
+  <img class="entrar-mascote" src="{% static 'jogo/img/mascote_cabeca.png' %}" alt="">
   <form method="post" class="adesivo">
     {% csrf_token %}
     <h1>Entrar no totem</h1>

@@ -16,6 +16,7 @@
 
   <!-- 1. Atração: tela de espera, toque em qualquer lugar para começar -->
   <section class="tela tela-atracao ativa" data-tela="atracao">
+    <img class="logo-certel atracao-logo" src="{% static 'jogo/img/logo_certel_branco.svg' %}" alt="Certel Cooperativa">
     <h1 class="titulo-traco atracao-titulo" data-titulo>{{ configuracao.titulo }}</h1>
     <div class="disco"></div>
     <div class="orbita" aria-hidden="true">
@@ -76,18 +77,20 @@
           <img src="{% static 'jogo/img/icone_servicos.png' %}" alt="Serviços">
           <img src="{% static 'jogo/img/icone_lumen.png' %}" alt="Lumen Securitizadora">
         </div>
+        <p class="regra-nota" data-multiplicador><span data-itens-mult>{{ configuracao.itens_por_multiplicador }}</span> seguidos valem em dobro, <span data-itens-mult-2>10</span> em triplo.</p>
       </div>
       <div class="regra regra-desviar adesivo">
-        <h3>Desvie dos perigos <span class="valor-pontos">−<span data-pontos-erro>{{ configuracao.pontos_erro }}</span></span></h3>
+        <h3>Desvie dos obstáculos <span class="valor-pontos">−<span data-pontos-erro>{{ configuracao.pontos_erro }}</span></span></h3>
         <div class="fila">
-          <img src="{% static 'jogo/img/perigo_curto.png' %}" alt="Curto-circuito">
-          <img src="{% static 'jogo/img/perigo_fio.png' %}" alt="Fio partido">
-          <img src="{% static 'jogo/img/perigo_pipa.png' %}" alt="Pipa na rede">
+          <img src="{% static 'jogo/img/perigo_curto.png' %}" alt="Obstáculo: curto-circuito">
+          <img src="{% static 'jogo/img/perigo_fio.png' %}" alt="Obstáculo: fio partido">
+          <img src="{% static 'jogo/img/perigo_pipa.png' %}" alt="Obstáculo: pipa na rede">
         </div>
+        <p class="regra-nota" data-multiplicador>Encostou, perde o multiplicador.</p>
       </div>
       <div class="regra regra-mover adesivo">
         <svg viewBox="0 0 120 84" aria-hidden="true"><g stroke="#000" stroke-width="5" stroke-linejoin="round"><circle cx="34" cy="42" r="30" fill="#244a90"/><circle cx="86" cy="42" r="30" fill="#244a90"/><path d="M44 28L22 42l22 14z" fill="#fff"/><path d="M76 28l22 14-22 14z" fill="#fff"/></g></svg>
-        <p>Arraste o dedo ou segure as setas para andar. Você tem <span data-duracao>{{ configuracao.duracao_segundos }}</span> segundos.</p>
+        <p>Arraste o dedo ou segure as setas.<span data-aceleracao> A cada <span data-pontos-dobra>{{ configuracao.pontos_por_dobra }}</span> pontos, mais velocidade e mais obstáculos.</span></p>
       </div>
     </div>
     <img class="instrucoes-mascote" src="{% static 'jogo/img/mascote.png' %}" alt="">
@@ -98,6 +101,8 @@
   <section class="tela tela-jogo" data-tela="jogo">
     <canvas id="pista" width="720" height="1280"></canvas>
     <div class="placar adesivo" id="placar"><span class="rotulo">Pontos</span><span class="numero" id="placar-numero">0</span></div>
+    <div class="combo adesivo" id="combo" aria-live="polite"><span class="combo-mult" id="combo-mult">1x</span><span class="combo-pontos" id="combo-pontos" aria-hidden="true"></span></div>
+    <div class="ritmo adesivo" id="ritmo"><span class="ritmo-rotulo">Velocidade</span><span class="ritmo-setas" id="ritmo-setas" aria-hidden="true"></span></div>
     <div class="tempo adesivo" id="tempo" role="timer" aria-label="Tempo restante"><div class="barra" id="tempo-barra"></div><div class="segundos" id="tempo-segundos"></div></div>
     <button class="seta seta-esquerda" type="button" id="seta-esquerda" aria-label="Andar para a esquerda"><svg viewBox="0 0 24 24"><path d="M15.5 4L6 12l9.5 8z" fill="#fff" stroke="#000" stroke-width="1.6" stroke-linejoin="round"/></svg></button>
     <button class="seta seta-direita" type="button" id="seta-direita" aria-label="Andar para a direita"><svg viewBox="0 0 24 24"><path d="M8.5 4L18 12l-9.5 8z" fill="#fff" stroke="#000" stroke-width="1.6" stroke-linejoin="round"/></svg></button>
@@ -137,7 +142,7 @@
 {% if totem %}
 {{ configuracao|json_script:"configuracao" }}
 <script id="rotas" type="application/json">{"config": "{% url 'jogo:api-config' %}", "ranking": "{% url 'jogo:api-ranking' %}", "iniciar": "{% url 'jogo:api-iniciar' %}", "finalizar": "{% url 'jogo:api-finalizar' pk='00000000-0000-0000-0000-000000000000' %}"}</script>
-<script id="imagens" type="application/json">{"mascote": "{% static 'jogo/img/mascote_sprite.png' %}", "bons": ["{% static 'jogo/img/icone_energia.png' %}", "{% static 'jogo/img/icone_estruturas.png' %}", "{% static 'jogo/img/icone_geracao.png' %}", "{% static 'jogo/img/icone_lojas.png' %}", "{% static 'jogo/img/icone_comercializadora.png' %}", "{% static 'jogo/img/icone_servicos.png' %}", "{% static 'jogo/img/icone_lumen.png' %}"], "ruins": ["{% static 'jogo/img/perigo_curto.png' %}", "{% static 'jogo/img/perigo_fio.png' %}", "{% static 'jogo/img/perigo_pipa.png' %}"]}</script>
+<script id="imagens" type="application/json">{"mascote": "{% static 'jogo/img/mascote_sprite.png' %}", "corrida": "{% static 'jogo/img/mascote_corrida.png' %}", "bons": ["{% static 'jogo/img/icone_energia.png' %}", "{% static 'jogo/img/icone_estruturas.png' %}", "{% static 'jogo/img/icone_geracao.png' %}", "{% static 'jogo/img/icone_lojas.png' %}", "{% static 'jogo/img/icone_comercializadora.png' %}", "{% static 'jogo/img/icone_servicos.png' %}", "{% static 'jogo/img/icone_lumen.png' %}"], "ruins": ["{% static 'jogo/img/perigo_curto.png' %}", "{% static 'jogo/img/perigo_fio.png' %}", "{% static 'jogo/img/perigo_pipa.png' %}"]}</script>
 <script src="{% static 'jogo/js/api.js' %}"></script>
 <script src="{% static 'jogo/js/som.js' %}"></script>
 <script src="{% static 'jogo/js/teclado.js' %}"></script>
