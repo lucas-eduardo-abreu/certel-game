@@ -1,12 +1,16 @@
 # Blueprint do Render: um serviço web (Django) e um Postgres.
 # No painel: Blueprints > New Blueprint Instance > escolha este repositório.
 #
-# Os planos "free" servem para testar. Para o evento, troque os dois para um
-# plano pago: o web gratuito hiberna sem acesso e o Postgres gratuito expira.
+# Planos pagos mais baratos: o web "starter" (US$ 7/mês) não hiberna e o
+# Postgres "basic-256mb" (US$ 6/mês + US$ 0,30/GB) não expira, ao contrário
+# dos gratuitos. Virginia é a região do Render mais próxima do Brasil; o web e
+# o banco precisam ficar na mesma região.
 
 databases:
   - name: certel-game-db
-    plan: free
+    plan: basic-256mb
+    diskSizeGB: 1
+    region: virginia
     databaseName: certel_game
     user: certel_game
 
@@ -14,7 +18,8 @@ services:
   - type: web
     name: certel-game
     runtime: python
-    plan: free
+    plan: starter
+    region: virginia
     buildCommand: bash build.sh
     startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 60
     healthCheckPath: /healthz/

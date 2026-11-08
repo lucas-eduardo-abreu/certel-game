@@ -90,10 +90,11 @@ No computador dá para jogar com as setas do teclado ou A/D.
 4. Ao fim do build, `build.sh` já terá rodado as migrações e criado
    `totem1`, `totem2`, `totem3`, `ranking` e o usuário `admin`.
 
-Os planos do `render.yaml` estão como `free` para testar. Para o evento,
-troque o web e o banco para planos pagos: a instância gratuita hiberna sem
-tráfego e o Postgres gratuito tem prazo de validade. Limites atuais em
-https://render.com/docs/free.
+O `render.yaml` usa os planos pagos mais baratos, na região Virginia: web
+`starter` (US$ 7/mês, não hiberna) e Postgres `basic-256mb` com 1 GB
+(US$ 6/mês + US$ 0,30/GB, não expira). Total de cerca de US$ 13,30/mês, em
+novembro de 2026. Os planos gratuitos não servem para o evento: o web hiberna
+sem tráfego e o Postgres gratuito expira. Preços em https://render.com/pricing.
 
 Variáveis de ambiente:
 
