@@ -1,6 +1,6 @@
 {% extends "jogo/base.html" %}
 {% load static %}
-{% block titulo %}Entrar no totem{% endblock %}
+{% block titulo %}Entrar{% endblock %}
 {% block estilos %}<link rel="stylesheet" href="{% static 'jogo/css/entrar.css' %}">{% endblock %}
 {% block conteudo %}
 <main class="entrar">
@@ -8,9 +8,9 @@
   <img class="entrar-mascote" src="{% static 'jogo/img/mascote_cabeca.png' %}" alt="">
   <form method="post" class="adesivo">
     {% csrf_token %}
-    <h1>Entrar no totem</h1>
+    <h1>Entrar</h1>
     {% if form.errors %}<p class="erro" role="alert">Usuário ou senha incorretos.</p>{% endif %}
-    <label for="id_username">Usuário do totem</label>
+    <label for="id_username">Usuário</label>
     <input id="id_username" name="username" type="text" autocomplete="username" autocapitalize="none" value="{{ form.username.value|default:'' }}" placeholder="totem1" required autofocus>
     <label for="id_password">Senha</label>
     <input id="id_password" name="password" type="password" autocomplete="current-password" required>

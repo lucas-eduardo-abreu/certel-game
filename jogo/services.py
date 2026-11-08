@@ -1,12 +1,14 @@
 """Regras de negócio do jogo: partidas, validação de pontuação e ranking."""
 
 import re
+import secrets
 
 from django.db import transaction
 from django.db.models import OuterRef, Q, Subquery
+from django.db.models.functions import TruncDate
 from django.utils import timezone
 
-from .models import ConfiguracaoJogo, Jogador, Partida
+from .models import ConfiguracaoJogo, Jogador, Partida, Sorteio
 
 # Cópia do ritmo do motor do jogo (static/jogo/js/motor.js). Serve para simular
 # uma partida perfeita e, daí, calcular a pontuação máxima aceita.
@@ -22,6 +24,10 @@ TOLERANCIA_SEGUNDOS = 3
 
 class PartidaInvalida(Exception):
     """Erro de regra de negócio ao iniciar ou finalizar uma partida."""
+
+
+class SorteioInvalido(Exception):
+    """Erro de regra de negócio ao girar a roleta."""
 
 
 def normalizar_telefone(valor):
@@ -174,7 +180,7 @@ def _melhores_partidas():
         QuerySet: Partidas finalizadas e visíveis, uma por jogador,
         ordenadas da maior pontuação para a menor (empate: quem fez antes).
     """
-    visiveis = Partida.objects.filter(status=Partida.Status.FINALIZADA, oculta=False)
+    visiveis = _partidas_validas()
     melhor_do_jogador = (
         visiveis.filter(jogador=OuterRef("jogador"))
         .order_by("-pontuacao", "finalizada_em", "pk")
@@ -229,3 +235,121 @@ def posicao_do_jogador(jogador):
         | Q(pontuacao=melhor.pontuacao, finalizada_em__lt=melhor.finalizada_em)
     ).count()
     return a_frente + 1, melhor.pontuacao
+
+
+def _partidas_validas():
+    """Partidas que contam para o ranking e para os sorteios.
+
+    Returns:
+        QuerySet: Partidas finalizadas e não ocultas.
+    """
+    return Partida.objects.filter(status=Partida.Status.FINALIZADA, oculta=False)
+
+
+def dias_com_partidas():
+    """Lista os dias (no fuso do evento) em que houve partidas válidas.
+
+    Returns:
+        list[date]: Dias do mais recente para o mais antigo.
+    """
+    return list(
+        _partidas_validas()
+        .annotate(dia=TruncDate("finalizada_em"))
+        .values_list("dia", flat=True)
+        .distinct()
+        .order_by("-dia")
+    )
+
+
+def _escopo_do_sorteio(tipo, dia):
+    """Valida o tipo e devolve o dia que vale para ele.
+
+    Args:
+        tipo: ``Sorteio.Tipo.DIARIO`` ou ``Sorteio.Tipo.GERAL``.
+        dia: Dia do sorteio diário (ignorado no geral).
+
+    Returns:
+        date | None: O dia, no diário; ``None`` no geral.
+
+    Raises:
+        SorteioInvalido: Se o tipo for desconhecido ou faltar o dia.
+    """
+    if tipo == Sorteio.Tipo.GERAL:
+        return None
+    if tipo != Sorteio.Tipo.DIARIO:
+        raise SorteioInvalido("Tipo de roleta inválido.")
+    if dia is None:
+        raise SorteioInvalido("Escolha o dia do sorteio.")
+    return dia
+
+
+def sorteios_realizados(tipo, dia=None):
+    """Sorteios já feitos em um escopo, do primeiro para o último.
+
+    Args:
+        tipo: Tipo da roleta.
+        dia: Dia, no sorteio diário.
+
+    Returns:
+        QuerySet: Sorteios com o vencedor carregado.
+    """
+    dia = _escopo_do_sorteio(tipo, dia)
+    return (
+        Sorteio.objects.filter(tipo=tipo, dia=dia)
+        .select_related("vencedor")
+        .order_by("created_at")
+    )
+
+
+def participantes_do_sorteio(tipo, dia=None):
+    """Jogadores que concorrem na roleta.
+
+    No diário, quem tem partida válida finalizada no dia; no geral, quem tem
+    qualquer partida válida. Quem já ganhou no mesmo escopo fica de fora.
+
+    Args:
+        tipo: Tipo da roleta.
+        dia: Dia, no sorteio diário.
+
+    Returns:
+        QuerySet: Jogadores elegíveis.
+    """
+    dia = _escopo_do_sorteio(tipo, dia)
+    partidas = _partidas_validas()
+    if dia is not None:
+        partidas = partidas.filter(finalizada_em__date=dia)
+    ja_ganharam = Sorteio.objects.filter(tipo=tipo, dia=dia).values("vencedor")
+    return Jogador.objects.filter(pk__in=partidas.values("jogador")).exclude(pk__in=ja_ganharam)
+
+
+@transaction.atomic
+def sortear(tipo, dia=None, usuario=None):
+    """Gira a roleta: escolhe um vencedor ao acaso e registra o sorteio.
+
+    O vencedor é escolhido no servidor (``secrets``), não no navegador; a
+    tela só anima a roleta até o nome sorteado.
+
+    Args:
+        tipo: Tipo da roleta.
+        dia: Dia, no sorteio diário.
+        usuario: Quem girou a roleta.
+
+    Returns:
+        Sorteio: O sorteio registrado.
+
+    Raises:
+        SorteioInvalido: Se não houver ninguém para sortear.
+    """
+    dia = _escopo_do_sorteio(tipo, dia)
+    # Trava a configuração para dois giros ao mesmo tempo não sortearem a mesma pessoa.
+    ConfiguracaoJogo.objects.select_for_update().get(pk=ConfiguracaoJogo.carregar().pk)
+    candidatos = list(participantes_do_sorteio(tipo, dia).values_list("pk", flat=True))
+    if not candidatos:
+        raise SorteioInvalido("Não há ninguém para sortear.")
+    return Sorteio.objects.create(
+        tipo=tipo,
+        dia=dia,
+        vencedor_id=secrets.choice(candidatos),
+        participantes=len(candidatos),
+        realizado_por=usuario if usuario and usuario.is_authenticated else None,
+    )

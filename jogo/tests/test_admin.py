@@ -5,7 +5,8 @@ from django.test import TestCase
 from django.urls import reverse
 from model_bakery import baker
 
-from jogo.models import ConfiguracaoJogo, Jogador, Partida
+from jogo import services
+from jogo.models import ConfiguracaoJogo, Jogador, Partida, Sorteio
 
 from .fabricas import criar_partida_finalizada, criar_totem
 
@@ -25,7 +26,8 @@ class AdminTest(TestCase):
     def test_listagens_abrem(self):
         """Todas as listagens do jogo carregam."""
         ConfiguracaoJogo.carregar()
-        for modelo in ["totem", "jogador", "partida", "configuracaojogo"]:
+        services.sortear(Sorteio.Tipo.GERAL)
+        for modelo in ["totem", "jogador", "partida", "sorteio", "configuracaojogo"]:
             resposta = self.client.get(reverse(f"admin:jogo_{modelo}_changelist"))
             self.assertEqual(resposta.status_code, 200, modelo)
 

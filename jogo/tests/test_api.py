@@ -9,7 +9,13 @@ from django.urls import reverse
 from jogo import services
 from jogo.models import Partida
 
-from .fabricas import criar_partida_finalizada, criar_totem, envelhecer
+from .fabricas import (
+    criar_admin,
+    criar_partida_finalizada,
+    criar_totem,
+    criar_usuario_ranking,
+    envelhecer,
+)
 
 
 class BaseApiTest(TestCase):
@@ -147,16 +153,30 @@ class FinalizarPartidaApiTest(BaseApiTest):
 
 
 class RankingApiTest(TestCase):
-    """Endpoint público do ranking."""
+    """Endpoint do ranking."""
 
     def setUp(self):
-        """Cria quatro partidas finalizadas."""
-        totem = criar_totem()
+        """Cria quatro partidas finalizadas e loga o usuário do ranking."""
+        self.totem = criar_totem()
         for indice in range(4):
-            criar_partida_finalizada(totem, 100 * (indice + 1), minutos_atras=indice)
+            criar_partida_finalizada(self.totem, 100 * (indice + 1), minutos_atras=indice)
+        self.client.force_login(criar_usuario_ranking())
 
-    def test_publico(self):
-        """O telão lê o ranking sem login."""
+    def test_quem_pode_ler(self):
+        """Ranking, totem e admin leem; anônimo e usuário sem perfil não."""
+        url = reverse("jogo:api-ranking")
+        self.assertEqual(self.client.get(url).status_code, 200)
+        self.client.force_login(self.totem.usuario)
+        self.assertEqual(self.client.get(url).status_code, 200)
+        self.client.force_login(criar_admin())
+        self.assertEqual(self.client.get(url).status_code, 200)
+        self.client.force_login(get_user_model().objects.create_user("fulano", password="x"))
+        self.assertEqual(self.client.get(url).status_code, 403)
+        self.client.logout()
+        self.assertEqual(self.client.get(url).status_code, 403)
+
+    def test_telao(self):
+        """O telão lê o ranking geral."""
         resposta = self.client.get(reverse("jogo:api-ranking"))
         self.assertEqual(resposta.status_code, 200)
         dados = resposta.json()

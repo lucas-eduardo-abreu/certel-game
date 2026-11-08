@@ -3,10 +3,12 @@
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.utils import timezone
 from model_bakery import baker
 
 from jogo.models import Partida, Totem
+from jogo.perfis import GRUPO_RANKING
 
 
 def criar_totem(numero=1, ativo=True, senha="senha-do-totem"):
@@ -22,6 +24,32 @@ def criar_totem(numero=1, ativo=True, senha="senha-do-totem"):
     """
     usuario = get_user_model().objects.create_user(username=f"totem{numero}", password=senha)
     return baker.make(Totem, usuario=usuario, nome=f"Totem {numero}", ativo=ativo)
+
+
+def criar_usuario_ranking(senha="senha-ranking"):
+    """Cria o usuário do telão (grupo Ranking).
+
+    Args:
+        senha: Senha do usuário.
+
+    Returns:
+        User: Usuário criado.
+    """
+    usuario = get_user_model().objects.create_user(username="ranking", password=senha)
+    usuario.groups.add(Group.objects.get_or_create(name=GRUPO_RANKING)[0])
+    return usuario
+
+
+def criar_admin(senha="senha-admin"):
+    """Cria um superusuário.
+
+    Args:
+        senha: Senha do admin.
+
+    Returns:
+        User: Superusuário criado.
+    """
+    return get_user_model().objects.create_superuser(username="admin", password=senha)
 
 
 def criar_partida_finalizada(totem, pontuacao, jogador=None, minutos_atras=0, **extras):

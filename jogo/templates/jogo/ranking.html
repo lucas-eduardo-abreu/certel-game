@@ -3,6 +3,7 @@
 {% block titulo %}Ranking — {{ titulo }}{% endblock %}
 {% block estilos %}<link rel="stylesheet" href="{% static 'jogo/css/ranking.css' %}">{% endblock %}
 {% block conteudo %}
+{% include "jogo/partes/navegacao_telao.html" %}
 <main class="telao">
   <aside class="telao-marca">
     <div class="telao-topo">
@@ -23,4 +24,5 @@
 {% block scripts %}
 <script>window.CERTEL_RANKING_URL = "{% url 'jogo:api-ranking' %}";</script>
 <script src="{% static 'jogo/js/ranking.js' %}"></script>
+<script src="{% static 'jogo/js/telao.js' %}"></script>
 {% endblock %}

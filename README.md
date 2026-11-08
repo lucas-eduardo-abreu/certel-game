@@ -70,8 +70,11 @@ python manage.py preparar_ambiente
 python manage.py runserver
 ```
 
+- Entrar: http://localhost:8000/entrar/ — cada usuário cai na sua tela (veja
+  "Acessos" abaixo)
 - Totem: http://localhost:8000/ — login `totem1` (ou `totem2`, `totem3`), senha de `TOTENS_SENHA`
-- Telão do ranking: http://localhost:8000/ranking/ (não pede login)
+- Telão do ranking: http://localhost:8000/ranking/ — login `ranking`, senha de `RANKING_SENHA`
+- Roleta: http://localhost:8000/roleta/ (do dia) e `/roleta/?tipo=geral` — login `ranking`
 - Admin: http://localhost:8000/admin/ — `ADMIN_USUARIO` / `ADMIN_SENHA`
 
 No computador dá para jogar com as setas do teclado ou A/D.
@@ -81,10 +84,11 @@ No computador dá para jogar com as setas do teclado ou A/D.
 1. Suba este projeto para um repositório no GitHub.
 2. No Render: **Blueprints > New Blueprint Instance** e escolha o repositório.
    O `render.yaml` cria o serviço web e o Postgres.
-3. O painel pede dois valores: `TOTENS_SENHA` (senha dos logins dos totens) e
-   `ADMIN_SENHA` (senha do admin).
+3. O painel pede três valores: `TOTENS_SENHA` (senha dos logins dos totens),
+   `RANKING_SENHA` (senha do telão do ranking e da roleta) e `ADMIN_SENHA`
+   (senha do admin).
 4. Ao fim do build, `build.sh` já terá rodado as migrações e criado
-   `totem1`, `totem2`, `totem3` e o usuário `admin`.
+   `totem1`, `totem2`, `totem3`, `ranking` e o usuário `admin`.
 
 Os planos do `render.yaml` estão como `free` para testar. Para o evento,
 troque o web e o banco para planos pagos: a instância gratuita hiberna sem
@@ -99,12 +103,57 @@ Variáveis de ambiente:
 | `DATABASE_URL` | Conexão do Postgres (o Render preenche) |
 | `TOTENS_SENHA` | Senha usada ao criar os logins dos totens |
 | `TOTENS_QUANTIDADE` | Quantos totens criar (padrão 3) |
+| `RANKING_USUARIO`, `RANKING_SENHA` | Login do telão do ranking e da roleta (padrão `ranking`); sem senha, não é criado |
 | `ADMIN_USUARIO`, `ADMIN_SENHA` | Superusuário criado no primeiro deploy |
 | `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS` | Só se usar domínio próprio |
 
-Mudar a senha dos totens depois de criados:
-`python manage.py preparar_ambiente --senha NOVA --redefinir-senhas`
+Mudar as senhas depois de criadas:
+`python manage.py preparar_ambiente --senha NOVA --senha-ranking NOVA2 --redefinir-senhas`
 (ou pelo admin, em Usuários).
+
+## Acessos
+
+São cinco logins, todos pela mesma tela `/entrar/`. Depois do login cada um
+cai na sua tela; se abrir uma tela que não é sua, volta para a dele.
+
+| Login | O que vê |
+| --- | --- |
+| `admin` | O admin e todas as telas. No jogo entra em **prévia**: joga normalmente, mas a partida não vai para o ranking (faixa amarela no topo). |
+| `totem1`, `totem2`, `totem3` | Só o jogo. |
+| `ranking` | Só o telão do ranking e a roleta. Não entra no admin nem no jogo. |
+
+O perfil `ranking` é o grupo **Ranking** (admin > Grupos). Para dar o mesmo
+acesso a outro usuário, ponha-o nesse grupo. O admin é qualquer usuário com
+"membro da equipe" marcado. As regras ficam em `jogo/perfis.py`.
+
+No telão, mexa o mouse para aparecer o menu (Ranking, Roleta do dia, Roleta
+geral, Sair) no canto superior direito; ele some sozinho.
+
+## Roleta
+
+Duas roletas, as duas operadas pelo login `ranking` (ou pelo admin):
+
+- **Roleta do dia** (`/roleta/`): concorre quem jogou no dia escolhido
+  (padrão: hoje, no fuso de São Paulo). Dá para escolher um dia anterior.
+- **Roleta geral** (`/roleta/?tipo=geral`): concorrem todos os jogadores do
+  evento.
+
+Regras:
+
+- Conta quem tem partida finalizada e não oculta. Partida ocultada no admin
+  tira a pessoa da roleta também.
+- O vencedor é sorteado no servidor; a tela só gira até o nome sorteado.
+- Cada giro fica registrado em **Sorteios** no admin, com nome completo,
+  telefone, quantos concorreram e quem girou.
+- Quem já ganhou não entra de novo **no mesmo sorteio** (mesmo dia, no
+  diário; ou o geral). Girar de novo sorteia o próximo prêmio. Quem ganhou no
+  dia continua concorrendo na roleta geral.
+- Para refazer um sorteio (ex.: ganhador não apareceu e deve voltar a
+  concorrer), exclua-o em admin > Sorteios.
+- Com "pedir telefone" desligado, cada partida vira um jogador novo; aí quem
+  jogou várias vezes tem várias chances.
+- A roda desenha até 36 nomes (uma amostra quando há mais gente); todos os
+  participantes concorrem, e o total aparece na tela.
 
 ## Preparar cada totem
 
@@ -242,23 +291,27 @@ O `.coveragerc` reprova abaixo de 98%.
 config/                 settings, urls, wsgi
 core/                   AbstractBaseModel (UUID4, created_at, updated_at), health check
 jogo/
-  models.py             Totem, Jogador, Partida, ConfiguracaoJogo
-  services.py           regras: iniciar/finalizar partida, ranking
+  models.py             Totem, Jogador, Partida, Sorteio, ConfiguracaoJogo
+  perfis.py             perfis de acesso: admin, totem, ranking
+  services.py           regras: iniciar/finalizar partida, ranking, sorteio
   api.py                endpoints JSON dos totens e do telão
-  views.py              páginas: login, totem, telão
+  views.py              páginas: login, totem, telão, roleta
   admin.py              admin (Jazzmin)
   management/commands/  preparar_ambiente
-  static/jogo/js/       motor.js (jogo), totem.js (fluxo), teclado.js, som.js, api.js, ranking.js
-  templates/jogo/       entrar.html, totem.html, ranking.html
+  static/jogo/js/       motor.js (jogo), totem.js (fluxo), teclado.js, som.js, api.js, ranking.js,
+                        roleta.js, telao.js (menu do telão)
+  templates/jogo/       entrar.html, totem.html, ranking.html, roleta.html
 scripts/                gerador da demonstração e modelo 3D do mascote (mascote3d/)
 ```
 
 | Rota | O que é |
 | --- | --- |
-| `/` | Jogo (exige login de totem) |
-| `/entrar/`, `/sair/` | Login e logout do totem |
-| `/ranking/` | Telão do ranking (público) |
-| `/api/ranking/` | Ranking em JSON (público) |
+| `/` | Jogo (totem; admin em prévia) |
+| `/entrar/`, `/sair/` | Login e logout de todos os perfis |
+| `/ranking/` | Telão do ranking (ranking, admin) |
+| `/roleta/`, `/roleta/?tipo=geral` | Roleta do dia e geral (ranking, admin) |
+| `/api/ranking/` | Ranking em JSON (totem, ranking, admin) |
+| `/api/roleta/` | Estado da roleta (GET) e giro (POST) (ranking, admin) |
 | `/api/config/` | Configuração em vigor (totem) |
 | `/api/partidas/` | Abre a partida (totem) |
 | `/api/partidas/<id>/finalizar/` | Registra a pontuação (totem) |

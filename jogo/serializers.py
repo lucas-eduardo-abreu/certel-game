@@ -2,7 +2,7 @@
 
 from rest_framework import serializers
 
-from .models import ConfiguracaoJogo
+from .models import ConfiguracaoJogo, Sorteio
 
 
 class ConfiguracaoSerializer(serializers.ModelSerializer):
@@ -42,3 +42,10 @@ class FinalizarPartidaSerializer(serializers.Serializer):
     pontuacao = serializers.IntegerField(min_value=0)
     itens_coletados = serializers.IntegerField(min_value=0, required=False, default=0)
     perigos_atingidos = serializers.IntegerField(min_value=0, required=False, default=0)
+
+
+class RoletaSerializer(serializers.Serializer):
+    """Escolha da roleta: tipo e, no sorteio diário, o dia."""
+
+    tipo = serializers.ChoiceField(choices=Sorteio.Tipo.choices)
+    dia = serializers.DateField(required=False, allow_null=True)

@@ -1,18 +1,26 @@
 """Endpoints JSON consumidos pelos totens e pelo telão do ranking."""
 
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import status
-from rest_framework.permissions import AllowAny, BasePermission
+from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from . import services
-from .models import ConfiguracaoJogo, Partida
+from . import perfis, services
+from .models import ConfiguracaoJogo, Partida, Sorteio
 from .serializers import (
     ConfiguracaoSerializer,
     FinalizarPartidaSerializer,
     IniciarPartidaSerializer,
+    RoletaSerializer,
 )
+
+# Nome mostrado no lugar do totem quando o admin abre o jogo em prévia.
+NOME_PREVIA = "Prévia (admin)"
+
+# Quantos nomes a roleta desenha (com mais participantes, vai uma amostra).
+NOMES_NA_ROLETA = 36
 
 
 class EhTotem(BasePermission):
@@ -30,22 +38,51 @@ class EhTotem(BasePermission):
         Returns:
             bool: ``True`` se o usuário tiver um totem ativo.
         """
+        return perfis.totem_ativo(request.user) is not None
+
+
+class EhTotemOuAdmin(BasePermission):
+    """Totem ativo ou admin (que abre o jogo em modo prévia)."""
+
+    message = "Faça login com o usuário de um totem ativo."
+
+    def has_permission(self, request, view):
+        """Libera totens ativos e o admin."""
         usuario = request.user
-        if not usuario.is_authenticated:
-            return False
-        totem = getattr(usuario, "totem", None)
-        return bool(totem and totem.ativo)
+        return perfis.totem_ativo(usuario) is not None or perfis.eh_admin(usuario)
+
+
+class PodeVerRanking(BasePermission):
+    """Totens (pódio e resultado), o telão do ranking e o admin."""
+
+    message = "Faça login com o usuário do ranking."
+
+    def has_permission(self, request, view):
+        """Libera totens ativos, o grupo Ranking e o admin."""
+        usuario = request.user
+        return perfis.totem_ativo(usuario) is not None or perfis.eh_ranking(usuario)
+
+
+class EhRanking(BasePermission):
+    """Só o grupo Ranking e o admin, que operam a roleta."""
+
+    message = "Faça login com o usuário do ranking."
+
+    def has_permission(self, request, view):
+        """Libera o grupo Ranking e o admin."""
+        return perfis.eh_ranking(request.user)
 
 
 class ConfiguracaoView(APIView):
     """Configuração em vigor, para o totem se atualizar sem recarregar."""
 
-    permission_classes = [EhTotem]
+    permission_classes = [EhTotemOuAdmin]
 
     def get(self, request):
         """Retorna a configuração do jogo e o nome do totem logado."""
         dados = ConfiguracaoSerializer(ConfiguracaoJogo.carregar()).data
-        dados["totem"] = request.user.totem.nome
+        totem = perfis.totem_ativo(request.user)
+        dados["totem"] = totem.nome if totem else NOME_PREVIA
         return Response(dados)
 
 
@@ -110,10 +147,9 @@ class FinalizarPartidaView(APIView):
 
 
 class RankingView(APIView):
-    """Ranking geral. Público, para o telão rodar em outra máquina."""
+    """Ranking geral, para os totens e o telão."""
 
-    authentication_classes = []
-    permission_classes = [AllowAny]
+    permission_classes = [PodeVerRanking]
 
     def get(self, request):
         """Retorna o ranking geral e o título do jogo.
@@ -130,3 +166,86 @@ class RankingView(APIView):
         return Response(
             {"titulo": configuracao.titulo, "ranking": services.montar_ranking(limite)}
         )
+
+
+def _sorteio_json(sorteio):
+    """Formata um sorteio para a tela da roleta.
+
+    Args:
+        sorteio: Sorteio com o vencedor carregado.
+
+    Returns:
+        dict: Nome completo, nome curto, final do telefone e quantos concorreram.
+    """
+    vencedor = sorteio.vencedor
+    return {
+        "id": str(sorteio.pk),
+        "nome": vencedor.nome,
+        "nome_curto": vencedor.nome_publico,
+        "telefone_final": vencedor.telefone[-4:],
+        "participantes": sorteio.participantes,
+        "quando": sorteio.created_at.isoformat(),
+    }
+
+
+class RoletaView(APIView):
+    """Roleta de sorteio: participantes, vencedores e giro."""
+
+    permission_classes = [EhRanking]
+
+    def _escopo(self, dados):
+        """Valida tipo e dia; sem dia, o diário usa hoje.
+
+        Args:
+            dados: Query string ou corpo da requisição.
+
+        Returns:
+            tuple[str, date | None] | None: Tipo e dia, ou ``None`` se inválido.
+        """
+        serializer = RoletaSerializer(data=dados)
+        if not serializer.is_valid():
+            return None
+        tipo = serializer.validated_data["tipo"]
+        dia = serializer.validated_data.get("dia") or timezone.localdate()
+        return tipo, dia if tipo == Sorteio.Tipo.DIARIO else None
+
+    def get(self, request):
+        """Retorna o estado da roleta para um tipo e dia.
+
+        Returns:
+            Response: ``total`` de participantes, uma amostra de ``nomes``
+            para desenhar a roleta, os ``sorteios`` já feitos e os ``dias``
+            com partidas.
+        """
+        escopo = self._escopo(request.query_params)
+        if escopo is None:
+            return Response({"erro": "Tipo ou dia inválido."}, status=400)
+        tipo, dia = escopo
+        participantes = services.participantes_do_sorteio(tipo, dia)
+        nomes = [j.nome_publico for j in participantes.order_by("?")[:NOMES_NA_ROLETA]]
+        return Response(
+            {
+                "tipo": tipo,
+                "dia": dia.isoformat() if dia else None,
+                "dias": [d.isoformat() for d in services.dias_com_partidas()],
+                "total": participantes.count(),
+                "nomes": nomes,
+                "sorteios": [_sorteio_json(s) for s in services.sorteios_realizados(tipo, dia)],
+            }
+        )
+
+    def post(self, request):
+        """Gira a roleta e devolve o vencedor.
+
+        Returns:
+            Response: ``201`` com o ``sorteio``, ou ``400`` com ``erro``.
+        """
+        escopo = self._escopo(request.data)
+        if escopo is None:
+            return Response({"erro": "Tipo ou dia inválido."}, status=400)
+        tipo, dia = escopo
+        try:
+            sorteio = services.sortear(tipo, dia, usuario=request.user)
+        except services.SorteioInvalido as erro:
+            return Response({"erro": str(erro)}, status=400)
+        return Response({"sorteio": _sorteio_json(sorteio)}, status=status.HTTP_201_CREATED)

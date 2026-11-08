@@ -6,8 +6,9 @@
   <link rel="stylesheet" href="{% static 'jogo/css/totem.css' %}">
 {% endblock %}
 {% block conteudo %}
+{% if previa %}<div class="faixa-previa" role="status">Prévia do admin: as partidas não são salvas no ranking.</div>{% endif %}
 <div class="palco" id="palco">
-{% if not totem %}
+{% if not totem and not previa %}
   <div class="sem-totem">
     <p>Este usuário não está ligado a um totem ativo.<br>Entre com o login de um totem (ex.: totem1).</p>
     <form method="post" action="{% url 'jogo:sair' %}">{% csrf_token %}<button class="botao" type="submit">Trocar de usuário</button></form>
@@ -127,11 +128,12 @@
   <!-- Menu do operador: 5 toques no canto superior esquerdo da tela de atração -->
   <div class="operador" id="operador">
     <div class="caixa adesivo">
-      <h2 data-nome-totem>{{ totem.nome }}</h2>
+      <h2 data-nome-totem>{{ configuracao.totem }}</h2>
       <p>Menu do operador</p>
       <button class="botao" type="button" id="operador-tela-cheia">Tela cheia</button>
       <button class="botao botao-secundario" type="button" id="operador-recarregar">Recarregar</button>
-      <form method="post" action="{% url 'jogo:sair' %}" id="operador-sair">{% csrf_token %}<button class="botao botao-secundario" type="submit">Sair do totem</button></form>
+      {% if previa %}<a class="botao botao-secundario" href="{% url 'admin:index' %}">Voltar ao admin</a>{% endif %}
+      <form method="post" action="{% url 'jogo:sair' %}" id="operador-sair">{% csrf_token %}<button class="botao botao-secundario" type="submit">{% if previa %}Sair{% else %}Sair do totem{% endif %}</button></form>
       <button class="botao botao-secundario" type="button" id="operador-fechar">Fechar</button>
     </div>
   </div>
@@ -139,9 +141,9 @@
 </div>
 {% endblock %}
 {% block scripts %}
-{% if totem %}
+{% if totem or previa %}
 {{ configuracao|json_script:"configuracao" }}
-<script id="rotas" type="application/json">{"config": "{% url 'jogo:api-config' %}", "ranking": "{% url 'jogo:api-ranking' %}", "iniciar": "{% url 'jogo:api-iniciar' %}", "finalizar": "{% url 'jogo:api-finalizar' pk='00000000-0000-0000-0000-000000000000' %}"}</script>
+<script id="rotas" type="application/json">{"config": "{% url 'jogo:api-config' %}", "ranking": "{% url 'jogo:api-ranking' %}", "iniciar": "{% url 'jogo:api-iniciar' %}", "finalizar": "{% url 'jogo:api-finalizar' pk='00000000-0000-0000-0000-000000000000' %}", "previa": {{ previa|yesno:"true,false" }}}</script>
 <script id="imagens" type="application/json">{"mascote": "{% static 'jogo/img/mascote_sprite.png' %}", "corrida": "{% static 'jogo/img/mascote_corrida.png' %}", "bons": ["{% static 'jogo/img/icone_energia.png' %}", "{% static 'jogo/img/icone_estruturas.png' %}", "{% static 'jogo/img/icone_geracao.png' %}", "{% static 'jogo/img/icone_lojas.png' %}", "{% static 'jogo/img/icone_comercializadora.png' %}", "{% static 'jogo/img/icone_servicos.png' %}", "{% static 'jogo/img/icone_lumen.png' %}"], "ruins": ["{% static 'jogo/img/perigo_curto.png' %}", "{% static 'jogo/img/perigo_fio.png' %}", "{% static 'jogo/img/perigo_pipa.png' %}"]}</script>
 <script src="{% static 'jogo/js/api.js' %}"></script>
 <script src="{% static 'jogo/js/som.js' %}"></script>

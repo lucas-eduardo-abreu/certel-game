@@ -40,6 +40,8 @@
   function atualizar() {
     fetch(window.CERTEL_RANKING_URL, { cache: 'no-store' })
       .then(function (resposta) {
+        // Sessão expirada: recarrega para cair no login.
+        if (resposta.status === 401 || resposta.status === 403) { window.location.reload(); }
         if (!resposta.ok) { throw new Error('HTTP ' + resposta.status); }
         return resposta.json();
       })

@@ -274,3 +274,53 @@ class ConfiguracaoJogo(AbstractBaseModel):
         if configuracao is None:
             configuracao = cls.objects.create()
         return configuracao
+
+
+class Sorteio(AbstractBaseModel):
+    """Resultado de um giro da roleta.
+
+    Há dois tipos: o **diário**, que sorteia entre quem jogou em um dia, e o
+    **geral**, que sorteia entre todos os jogadores do evento. Quem já ganhou
+    em um sorteio não entra de novo no mesmo (mesmo tipo e, no diário, mesmo
+    dia), então girar outra vez sorteia o próximo prêmio. Para refazer um
+    sorteio, exclua-o no admin.
+
+    Attributes:
+        tipo: ``diario`` ou ``geral``.
+        dia: Dia sorteado (só no diário).
+        vencedor: Jogador sorteado.
+        participantes: Quantos jogadores concorreram.
+        realizado_por: Usuário que girou a roleta.
+    """
+
+    class Tipo(models.TextChoices):
+        """Tipos de roleta."""
+
+        DIARIO = "diario", "Do dia"
+        GERAL = "geral", "Geral"
+
+    tipo = models.CharField("tipo", max_length=10, choices=Tipo.choices)
+    dia = models.DateField("dia", null=True, blank=True)
+    vencedor = models.ForeignKey(
+        Jogador, on_delete=models.PROTECT, related_name="sorteios", verbose_name="vencedor"
+    )
+    participantes = models.PositiveIntegerField("participantes")
+    realizado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name="realizado por",
+    )
+
+    class Meta:
+        verbose_name = "sorteio"
+        verbose_name_plural = "sorteios"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        """Retorna tipo, dia e vencedor."""
+        if self.dia:
+            return f"{self.get_tipo_display()} {self.dia:%d/%m} — {self.vencedor}"
+        return f"{self.get_tipo_display()} — {self.vencedor}"

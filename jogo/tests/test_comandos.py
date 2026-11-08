@@ -7,6 +7,7 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase, override_settings
 
+from jogo import perfis
 from jogo.models import ConfiguracaoJogo, Totem
 
 
@@ -24,7 +25,14 @@ def rodar(**opcoes):
     return saida.getvalue()
 
 
-@override_settings(TOTENS_QUANTIDADE=3, TOTENS_SENHA="senha-evento", ADMIN_USUARIO="", ADMIN_SENHA="")
+@override_settings(
+    TOTENS_QUANTIDADE=3,
+    TOTENS_SENHA="senha-evento",
+    RANKING_USUARIO="ranking",
+    RANKING_SENHA="",
+    ADMIN_USUARIO="",
+    ADMIN_SENHA="",
+)
 class PrepararAmbienteTest(TestCase):
     """Comando ``preparar_ambiente``."""
 
@@ -65,3 +73,23 @@ class PrepararAmbienteTest(TestCase):
         self.assertNotIn("admin chefe", rodar(quantidade=1, senha="senha-evento"))
         admin = get_user_model().objects.get(username="chefe")
         self.assertTrue(admin.is_superuser)
+
+    def test_cria_usuario_do_ranking(self):
+        """Com RANKING_SENHA, cria o usuário do telão no grupo Ranking."""
+        saida = rodar(quantidade=1, senha="senha-evento", senha_ranking="senha-telao")
+        self.assertIn("ranking: criado", saida)
+        usuario = get_user_model().objects.get(username="ranking")
+        self.assertTrue(usuario.check_password("senha-telao"))
+        self.assertTrue(perfis.eh_ranking(usuario))
+        self.assertFalse(perfis.eh_admin(usuario))
+        self.assertIn("ranking: já existia", rodar(quantidade=1, senha="senha-evento"))
+        rodar(quantidade=1, senha="senha-evento", senha_ranking="nova", redefinir_senhas=True)
+        usuario.refresh_from_db()
+        self.assertTrue(usuario.check_password("nova"))
+
+    def test_sem_senha_do_ranking_nao_cria(self):
+        """Sem RANKING_SENHA, o resto é criado e o ranking fica de fora."""
+        saida = rodar(quantidade=1, senha="senha-evento")
+        self.assertIn("não criado (defina RANKING_SENHA)", saida)
+        self.assertFalse(get_user_model().objects.filter(username="ranking").exists())
+        self.assertEqual(Totem.objects.count(), 1)

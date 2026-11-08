@@ -1,11 +1,11 @@
-"""Admin do jogo: partidas, jogadores, totens e configuração."""
+"""Admin do jogo: partidas, jogadores, totens, sorteios e configuração."""
 
 import csv
 
 from django.contrib import admin
 from django.http import HttpResponse
 
-from .models import ConfiguracaoJogo, Jogador, Partida, Totem
+from .models import ConfiguracaoJogo, Jogador, Partida, Sorteio, Totem
 
 
 @admin.register(Totem)
@@ -106,6 +106,50 @@ class PartidaAdmin(admin.ModelAdmin):
         """Devolve as partidas selecionadas ao ranking."""
         total = queryset.update(oculta=False)
         self.message_user(request, f"{total} partida(s) de volta ao ranking.")
+
+
+@admin.register(Sorteio)
+class SorteioAdmin(admin.ModelAdmin):
+    """Admin dos sorteios da roleta.
+
+    Os sorteios só nascem pela roleta. Excluir um sorteio devolve o vencedor
+    para a roleta, para sortear de novo.
+    """
+
+    list_display = [
+        "tipo",
+        "dia",
+        "vencedor",
+        "telefone_vencedor",
+        "participantes",
+        "realizado_por",
+        "created_at",
+    ]
+    list_filter = ["tipo", "dia"]
+    search_fields = ["vencedor__nome", "vencedor__telefone"]
+    list_select_related = ["vencedor", "realizado_por"]
+    readonly_fields = [
+        "tipo",
+        "dia",
+        "vencedor",
+        "participantes",
+        "realizado_por",
+        "created_at",
+        "updated_at",
+    ]
+
+    @admin.display(description="telefone")
+    def telefone_vencedor(self, obj):
+        """Telefone do vencedor, para o contato do prêmio."""
+        return obj.vencedor.telefone_formatado
+
+    def has_add_permission(self, request):
+        """Sorteios só são criados girando a roleta."""
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        """Sorteio registrado não muda; para refazer, exclua."""
+        return False
 
 
 @admin.register(ConfiguracaoJogo)

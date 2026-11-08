@@ -1,0 +1,54 @@
+{% extends "jogo/base.html" %}
+{% load static %}
+{% block titulo %}Roleta — {{ titulo }}{% endblock %}
+{% block estilos %}
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <link rel="stylesheet" href="{% static 'jogo/css/ranking.css' %}">
+  <link rel="stylesheet" href="{% static 'jogo/css/roleta.css' %}">
+{% endblock %}
+{% block conteudo %}
+{% include "jogo/partes/navegacao_telao.html" %}
+<main class="telao roleta">
+  <aside class="telao-marca roleta-marca">
+    <div class="telao-topo">
+      <img class="logo-certel" src="{% static 'jogo/img/logo_certel_branco.svg' %}" alt="Certel Cooperativa">
+      <h1 class="titulo-traco" id="roleta-titulo">Roleta</h1>
+    </div>
+    <div class="roleta-abas" role="tablist" aria-label="Tipo de sorteio">
+      <button type="button" role="tab" data-tipo="diario">Do dia</button>
+      <button type="button" role="tab" data-tipo="geral">Geral</button>
+    </div>
+    <label class="roleta-dia" id="roleta-dia-campo">
+      <span>Dia</span>
+      <select id="roleta-dia"></select>
+    </label>
+    <p class="roleta-total adesivo" id="roleta-total" aria-live="polite"></p>
+    <section class="roleta-ganhadores">
+      <h2>Sorteados</h2>
+      <ol id="roleta-ganhadores"></ol>
+    </section>
+  </aside>
+  <section class="roleta-palco">
+    <div class="roleta-roda">
+      <canvas id="roleta-canvas" aria-label="Roleta com os nomes dos participantes" role="img"></canvas>
+      <div class="roleta-ponteiro" aria-hidden="true"></div>
+      <img class="roleta-centro" src="{% static 'jogo/img/mascote_cabeca.png' %}" alt="">
+    </div>
+    <button class="botao roleta-girar" type="button" id="roleta-girar">Girar</button>
+    <p class="roleta-erro" id="roleta-erro" role="alert"></p>
+  </section>
+</main>
+<div class="roleta-resultado" id="roleta-resultado" hidden>
+  <div class="caixa adesivo" role="dialog" aria-modal="true" aria-labelledby="roleta-resultado-nome">
+    <p class="roleta-resultado-titulo titulo-traco">Parabéns!</p>
+    <p class="roleta-resultado-nome" id="roleta-resultado-nome"></p>
+    <p class="roleta-resultado-info" id="roleta-resultado-info"></p>
+    <button class="botao" type="button" id="roleta-resultado-fechar">Fechar</button>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script id="roleta-dados" type="application/json">{"api": "{% url 'jogo:api-roleta' %}", "tipo": "{{ tipo }}", "url": "{% url 'jogo:roleta' %}"}</script>
+<script src="{% static 'jogo/js/roleta.js' %}"></script>
+<script src="{% static 'jogo/js/telao.js' %}"></script>
+{% endblock %}

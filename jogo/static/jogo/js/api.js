@@ -1,6 +1,7 @@
 /* Comunicação do totem com o servidor.
    Expõe window.CertelAPI com: config(), ranking(), iniciar(dados), finalizar(id, dados).
-   Erros de regra (HTTP 400) chegam com `erro.negocio = true` e a mensagem do servidor. */
+   Erros de regra (HTTP 400) chegam com `erro.negocio = true` e a mensagem do servidor.
+   Na prévia do admin (rotas.previa), iniciar e finalizar não vão ao servidor. */
 (function () {
   'use strict';
 
@@ -32,7 +33,7 @@
       .finally(function () { clearTimeout(relogio); });
   }
 
-  window.CertelAPI = {
+  var api = {
     config: function () { return pedir(rotas.config); },
     ranking: function () { return pedir(rotas.ranking); },
     iniciar: function (dados) {
@@ -45,4 +46,17 @@
       });
     }
   };
+
+  if (rotas.previa) {
+    api.iniciar = function (dados) {
+      return Promise.resolve({ id: UUID_ZERO, jogador: dados.nome });
+    };
+    api.finalizar = function (id, dados) {
+      return api.ranking().then(function (corpo) {
+        return { pontuacao: dados.pontuacao, posicao: null, jogador_id: null, ranking: corpo.ranking };
+      });
+    };
+  }
+
+  window.CertelAPI = api;
 })();

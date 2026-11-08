@@ -109,6 +109,7 @@ STORAGES = {
 
 # --- Autenticação dos totens --------------------------------------------
 LOGIN_URL = "jogo:entrar"
+# Depois do login cada perfil vai para a sua tela (EntrarView, jogo/perfis.py).
 LOGIN_REDIRECT_URL = "jogo:totem"
 LOGOUT_REDIRECT_URL = "jogo:entrar"
 
@@ -138,6 +139,8 @@ REST_FRAMEWORK = {
 # --- Acessos criados pelo comando ``preparar_ambiente`` --------------------
 TOTENS_QUANTIDADE = config("TOTENS_QUANTIDADE", default=3, cast=int)
 TOTENS_SENHA = config("TOTENS_SENHA", default="")
+RANKING_USUARIO = config("RANKING_USUARIO", default="ranking")
+RANKING_SENHA = config("RANKING_SENHA", default="")
 ADMIN_USUARIO = config("ADMIN_USUARIO", default="")
 ADMIN_SENHA = config("ADMIN_SENHA", default="")
 
@@ -150,7 +153,9 @@ JAZZMIN_SETTINGS = {
     "copyright": "Certel Game",
     "show_ui_builder": False,
     "topmenu_links": [
+        {"name": "Jogo (prévia)", "url": "jogo:totem", "new_window": True},
         {"name": "Ranking (telão)", "url": "jogo:ranking", "new_window": True},
+        {"name": "Roleta", "url": "jogo:roleta", "new_window": True},
     ],
     "icons": {
         "auth.User": "fas fa-user",
@@ -159,11 +164,13 @@ JAZZMIN_SETTINGS = {
         "jogo.Jogador": "fas fa-id-badge",
         "jogo.Partida": "fas fa-trophy",
         "jogo.ConfiguracaoJogo": "fas fa-sliders-h",
+        "jogo.Sorteio": "fas fa-dharmachakra",
     },
     "order_with_respect_to": [
         "jogo",
         "jogo.Partida",
         "jogo.Jogador",
+        "jogo.Sorteio",
         "jogo.Totem",
         "jogo.ConfiguracaoJogo",
         "auth",

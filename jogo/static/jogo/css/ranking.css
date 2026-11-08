@@ -200,3 +200,45 @@ body {
   .telao-lista .pontos { font-size: 3.2vh; min-width: 9vh; }
   .telao-lista .totem { font-size: 1.9vh; }
 }
+
+/* Menu do telão (ranking e roleta): escondido até mexer o mouse. */
+.telao-nav {
+  position: fixed;
+  top: 1.6vh;
+  right: 1.4vw;
+  z-index: 20;
+  display: flex;
+  gap: 0.6vw;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease-out;
+}
+
+.telao-nav.visivel,
+.telao-nav:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.telao-nav form {
+  margin: 0;
+}
+
+.telao-nav a,
+.telao-nav button {
+  display: block;
+  padding: 0.6vh 1.1vw;
+  border: 3px solid var(--preto);
+  border-radius: 999px;
+  background: var(--branco);
+  box-shadow: 0 0.4vh 0 var(--preto);
+  color: var(--preto);
+  font-size: max(14px, 1.9vh);
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.telao-nav [aria-current="page"] {
+  background: var(--amarelo);
+}
