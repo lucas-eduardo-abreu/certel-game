@@ -81,6 +81,21 @@ No computador dá para jogar com as setas do teclado ou A/D.
 
 ## Deploy no Render
 
+No ar em **https://certel-game.onrender.com** (plano grátis):
+
+| Tela | Endereço | Login |
+| --- | --- | --- |
+| Jogo | https://certel-game.onrender.com/ | `totem1`, `totem2`, `totem3` |
+| Telão do ranking | https://certel-game.onrender.com/ranking/ | `ranking` |
+| Roleta do dia | https://certel-game.onrender.com/roleta/ | `ranking` |
+| Roleta geral | https://certel-game.onrender.com/roleta/?tipo=geral | `ranking` |
+| Admin | https://certel-game.onrender.com/admin/ | `admin` |
+
+O endereço vem do nome do serviço no `render.yaml` (`certel-game`). O Django
+aceita sozinho o host do Render pela variável `RENDER_EXTERNAL_HOSTNAME`; só
+um domínio próprio precisa de `ALLOWED_HOSTS` e `CSRF_TRUSTED_ORIGINS`.
+
+
 1. Suba este projeto para um repositório no GitHub.
 2. No Render: **Blueprints > New Blueprint Instance** e escolha o repositório.
    O `render.yaml` cria o serviço web e o Postgres.
@@ -165,7 +180,7 @@ Regras:
    (`totem1` no primeiro, `totem2` no segundo...). O login é feito uma vez: a
    sessão dura um ano.
 2. Deixe o navegador em modo quiosque, por exemplo:
-   `chrome.exe --kiosk https://SEU-SERVICO.onrender.com/`
+   `chrome.exe --kiosk https://certel-game.onrender.com/`
 3. **Menu do operador:** cinco toques seguidos no canto superior esquerdo da
    tela de espera. Tem tela cheia, recarregar e sair do totem.
 
