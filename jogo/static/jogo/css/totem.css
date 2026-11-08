@@ -11,6 +11,15 @@ body {
   -webkit-touch-callout: none;
 }
 
+/* Sem zoom por toque duplo/pinça em nenhum elemento (botões das setas inclusive):
+   alguns navegadores ignoram o user-scalable=no do viewport. */
+*,
+*::before,
+*::after {
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   background: radial-gradient(circle at 50% 45%, var(--azul) 0, var(--azul-escuro) 70%);
 }

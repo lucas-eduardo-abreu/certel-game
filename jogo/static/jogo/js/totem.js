@@ -559,6 +559,24 @@
     document.addEventListener('dragstart', function (evento) { evento.preventDefault(); });
     document.addEventListener('pointerdown', function () { estado.ultimoToque = Date.now(); }, true);
 
+    // Bloqueia zoom: toque duplo, pinça, Ctrl+roda e Ctrl +/-.
+    var ultimoFimDeToque = 0;
+    document.addEventListener('touchend', function (evento) {
+      var agora = Date.now();
+      if (agora - ultimoFimDeToque < 400) { evento.preventDefault(); }
+      ultimoFimDeToque = agora;
+    }, { passive: false });
+    document.addEventListener('touchmove', function (evento) {
+      if (evento.touches.length > 1) { evento.preventDefault(); }
+    }, { passive: false });
+    document.addEventListener('dblclick', function (evento) { evento.preventDefault(); }, { passive: false });
+    document.addEventListener('wheel', function (evento) {
+      if (evento.ctrlKey) { evento.preventDefault(); }
+    }, { passive: false });
+    window.addEventListener('keydown', function (evento) {
+      if ((evento.ctrlKey || evento.metaKey) && /^(\+|-|=|0)$/.test(evento.key)) { evento.preventDefault(); }
+    });
+
     // Mantém a tela do totem acesa (quando o navegador permite).
     function manterAcesa() {
       if (navigator.wakeLock && document.visibilityState === 'visible') {
