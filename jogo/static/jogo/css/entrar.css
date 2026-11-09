@@ -7,9 +7,11 @@ body {
 .entrar {
   min-height: 100%;
   display: grid;
-  place-content: center;
+  /* "safe": se não couber (tela baixa, teclado aberto), alinha no topo em vez de cortar. */
+  align-content: safe center;
+  justify-content: center;
   justify-items: center;
-  padding: 24px;
+  padding: 24px 16px;
 }
 
 .entrar .logo-certel {
@@ -52,6 +54,8 @@ body {
   font: inherit;
   font-size: 26px;
   font-weight: 700;
+  width: 100%;
+  min-width: 0;
 }
 
 .entrar input:focus-visible {
@@ -73,6 +77,42 @@ body {
   background: var(--perigo);
   color: var(--branco);
   font-size: 20px;
+}
+
+@media (max-width: 480px), (max-height: 700px) {
+  .entrar .logo-certel {
+    width: 160px;
+    margin-bottom: 16px;
+  }
+
+  .entrar .entrar-mascote {
+    height: 100px;
+    margin-bottom: -12px;
+  }
+
+  .entrar form {
+    width: min(100%, 440px);
+    padding: 26px 20px 22px;
+  }
+
+  .entrar h1 {
+    font-size: 32px;
+  }
+
+  .entrar label {
+    font-size: 17px;
+  }
+
+  .entrar input {
+    height: 52px;
+    font-size: 20px;
+  }
+
+  .entrar .botao {
+    min-height: 64px;
+    padding: 0 24px;
+    font-size: 26px;
+  }
 }
 
 .sair-usuario {

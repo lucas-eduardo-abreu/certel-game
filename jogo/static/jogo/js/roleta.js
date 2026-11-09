@@ -251,11 +251,20 @@
     $('#roleta-resultado-fechar').focus();
   }
 
+  // No celular a página rola: traz a roda inteira para a tela antes de girar.
+  function mostrarRoda() {
+    var caixa = $('.roleta-roda').getBoundingClientRect();
+    if (caixa.top < 0 || caixa.bottom > window.innerHeight) {
+      $('.roleta-roda').scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }
+
   function girar() {
     if (estado.girando || !estado.fatias.length) { return; }
     estado.girando = true;
     $('#roleta-girar').disabled = true;
     $('#roleta-erro').textContent = '';
+    mostrarRoda();
 
     var resposta = null;
     var inicio = performance.now();
