@@ -34,23 +34,23 @@ class NormalizacaoTest(TestCase):
         return baker.prepare(ConfiguracaoJogo, **{**padrao, **campos})
 
     def test_pontuacao_maxima_sem_aceleracao(self):
-        """Em 10 s cabem 10 itens (+2 de folga): 5 a 1x, 5 a 2x e 2 a 3x."""
-        self.assertEqual(services.pontuacao_maxima(self.configuracao()), 2100)
+        """Em 10 s cabem 10 ícones grandes (+2 de folga): 5 a 1x, 5 a 2x e 2 a 3x."""
+        self.assertEqual(services.pontuacao_maxima(self.configuracao()), 4200)
 
     def test_pontuacao_maxima_sem_multiplicador(self):
-        """Com o multiplicador desligado, cada um dos 12 itens vale 100."""
+        """Com o multiplicador desligado, cada um dos 12 ícones grandes vale 200."""
         configuracao = self.configuracao(itens_por_multiplicador=0)
-        self.assertEqual(services.pontuacao_maxima(configuracao), 1200)
+        self.assertEqual(services.pontuacao_maxima(configuracao), 2400)
 
     def test_pontuacao_maxima_com_aceleracao(self):
-        """Dobrando a velocidade a cada 1000 pontos, cabem mais itens em 10 s."""
+        """Acelerando a cada 1000 pontos (1,5x, depois 2x), cabem mais itens em 10 s."""
         configuracao = self.configuracao(pontos_por_dobra=1000)
-        self.assertEqual(services.pontuacao_maxima(configuracao), 3400)
+        self.assertEqual(services.pontuacao_maxima(configuracao), 7600)
 
     def test_limite_de_dobras_segura_o_teto(self):
         """Sem dobras permitidas, a aceleração não muda a pontuação máxima."""
         configuracao = self.configuracao(pontos_por_dobra=1000, dobras_maximas=0)
-        self.assertEqual(services.pontuacao_maxima(configuracao), 2100)
+        self.assertEqual(services.pontuacao_maxima(configuracao), 4200)
 
 
 class IniciarPartidaTest(TestCase):

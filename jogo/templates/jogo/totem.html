@@ -68,7 +68,7 @@
     <h2 class="titulo-traco instrucoes-titulo">Como jogar</h2>
     <div class="regras">
       <div class="regra regra-pegar adesivo">
-        <h3>Pegue os ícones <span class="valor-pontos">+<span data-pontos-acerto>{{ configuracao.pontos_acerto }}</span></span></h3>
+        <h3>Pegue os ícones <span class="valor-pontos">+<span data-pontos-pequeno>{% widthratio configuracao.pontos_acerto 100 35 %}</span> a +<span data-pontos-grande>{% widthratio configuracao.pontos_acerto 1 2 %}</span></span></h3>
         <div class="fila">
           <img src="{% static 'jogo/img/icone_energia.png' %}" alt="Energia">
           <img src="{% static 'jogo/img/icone_estruturas.png' %}" alt="Estruturas de concreto">

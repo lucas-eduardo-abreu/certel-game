@@ -708,8 +708,8 @@ body {
 }
 
 .seta svg { width: 70px; height: 70px; }
-.seta-esquerda { left: 26px; }
-.seta-direita { right: 26px; }
+.seta-esquerda { left: 170px; }
+.seta-direita { right: 170px; }
 
 .seta.pressionado {
   transform: translateY(6px);

@@ -16,6 +16,9 @@ VELOCIDADE_BASE = 380
 PRIMEIRO_ITEM = 0.6
 ESPACAMENTO_ITENS = 360
 INTERVALO_MINIMO = 0.32
+ACELERACAO_POR_NIVEL = 0.5
+# O ícone grande vale o dobro de ``pontos_acerto`` (TAMANHOS no motor).
+FATOR_ICONE_GRANDE = 2
 FOLGA_ITENS = 2
 
 # Folga, em segundos, entre o cronômetro do totem e o relógio do servidor.
@@ -57,9 +60,9 @@ def normalizar_nome(valor):
 def pontuacao_maxima(configuracao):
     """Calcula a maior pontuação possível em uma partida.
 
-    Simula a partida perfeita com as regras do motor: todo item é um ícone,
-    pego no instante em que aparece; o multiplicador sobe a cada
-    ``itens_por_multiplicador`` e a rua dobra de velocidade a cada
+    Simula a partida perfeita com as regras do motor: todo item é um ícone
+    grande, pego no instante em que aparece; o multiplicador sobe a cada
+    ``itens_por_multiplicador`` e a rua acelera a cada
     ``pontos_por_dobra``, o que encurta o intervalo entre os itens.
 
     Args:
@@ -75,13 +78,13 @@ def pontuacao_maxima(configuracao):
     def coletar():
         nonlocal pontos, sequencia
         multiplicador = 1 + sequencia // passo if passo else 1
-        pontos += configuracao.pontos_acerto * multiplicador
+        pontos += configuracao.pontos_acerto * FATOR_ICONE_GRANDE * multiplicador
         sequencia += 1
 
     while instante < configuracao.duracao_segundos:
         coletar()
         nivel = min(configuracao.dobras_maximas, pontos // marca) if marca else 0
-        instante += max(INTERVALO_MINIMO, ESPACAMENTO_ITENS / (VELOCIDADE_BASE * 2**nivel))
+        instante += max(INTERVALO_MINIMO, ESPACAMENTO_ITENS / (VELOCIDADE_BASE * (1 + ACELERACAO_POR_NIVEL * nivel)))
     for _ in range(FOLGA_ITENS):
         coletar()
     return pontos

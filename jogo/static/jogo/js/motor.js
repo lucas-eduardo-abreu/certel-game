@@ -24,8 +24,11 @@
    `corrida` é a folha de sprites do mascote 3D correndo de costas; sem ela, o
    jogo usa a ilustração de frente (`mascote`).
 
-   Velocidade: a rua dobra de velocidade a cada `pontosPorDobra` pontos
-   (1000 = 2x, 2000 = 4x...), até `dobrasMaximas` dobras. O nível acompanha a
+   Ícones: vêm em três tamanhos. O grande vale o dobro de `pontosAcerto`
+   (200), o médio vale `pontosAcerto` (100) e o pequeno 35% dele (35).
+
+   Velocidade: a rua acelera meia velocidade inicial a cada `pontosPorDobra`
+   pontos (1000 = 1,5x, 2000 = 2x...), até `dobrasMaximas` marcas. O nível acompanha a
    pontuação atual: se ela cair abaixo da marca, a rua desacelera.
 
    Perigos: a proporção de perigos começa em `chancePerigoInicial` e sobe
@@ -35,7 +38,8 @@
    Cenário: rua de cidade vista de cima, em quarteirões com prédios,
    cruzamentos e calçada arborizada (ver "Rua de cidade", mais abaixo).
 
-   Atenção: VELOCIDADE_BASE, PRIMEIRO_ITEM, ESPACAMENTO_ITENS e INTERVALO_MINIMO
+   Atenção: VELOCIDADE_BASE, PRIMEIRO_ITEM, ESPACAMENTO_ITENS, INTERVALO_MINIMO,
+   ACELERACAO_POR_NIVEL e o maior `pontos` de TAMANHOS
    têm cópia em jogo/services.py — é com eles que o servidor calcula a
    pontuação máxima. Se mudar aqui, mude lá. */
 (function () {
@@ -69,11 +73,20 @@
   var PASSADAS_MAXIMO = 3.2;
 
   var TAMANHO_ITEM = 112;
-  var VELOCIDADE_BASE = 380;   // px/s da rua no começo; dobra a cada `pontosPorDobra`
+  var VELOCIDADE_BASE = 380;   // px/s da rua no começo; acelera a cada `pontosPorDobra`
   var PRIMEIRO_ITEM = 0.6;     // segundos até o primeiro item
   var ESPACAMENTO_ITENS = 360; // distância (px de rua) entre um item e o seguinte
   var INTERVALO_MINIMO = 0.32; // mas nunca menos que isto, em segundos, entre dois itens
   var CHANCE_PERIGO_MAXIMA = 0.65; // teto da proporção de perigos entre os itens
+  var ACELERACAO_POR_NIVEL = 0.5;  // cada nível soma meia velocidade inicial (1x, 1,5x, 2x)
+
+  // Tamanhos dos ícones: escala do desenho, fração de `pontosAcerto` e chance de aparecer.
+  // O maior `pontos` tem cópia em jogo/services.py (pontuação máxima).
+  var TAMANHOS = [
+    { escala: 1.4, pontos: 2, chance: 0.2 },
+    { escala: 1, pontos: 1, chance: 0.5 },
+    { escala: 0.62, pontos: 0.35, chance: 0.3 }
+  ];
 
   // Mesma pilha de fontes do CSS (base.css): Boston quando instalada, senão Montserrat.
   var FONTE = '"Boston", "Montserrat", "Segoe UI", Arial, sans-serif';
@@ -99,6 +112,16 @@
   };
 
   function misturar(a, b, t) { return a + (b - a) * t; }
+  function fatorVelocidade(nivel) { return 1 + ACELERACAO_POR_NIVEL * nivel; }
+
+  function sortearTamanho() {
+    var sorte = Math.random();
+    for (var i = 0; i < TAMANHOS.length - 1; i++) {
+      sorte -= TAMANHOS[i].chance;
+      if (sorte < 0) { return TAMANHOS[i]; }
+    }
+    return TAMANHOS[TAMANHOS.length - 1];
+  }
   function limitar(v, minimo, maximo) { return Math.max(minimo, Math.min(maximo, v)); }
 
   function embaralhar(lista) {
@@ -199,7 +222,7 @@
   Motor.prototype._atualizar = function (dt) {
     this.tempo += dt;
     // A velocidade persegue o nível atual em vez de saltar de uma vez.
-    this.ritmo = misturar(this.ritmo, Math.pow(2, this.nivel), Math.min(1, dt * 3.5));
+    this.ritmo = misturar(this.ritmo, fatorVelocidade(this.nivel), Math.min(1, dt * 3.5));
     var velocidade = VELOCIDADE_BASE * this.ritmo;
     this.percorrido += velocidade * dt;
     this.passada = (this.passada + Math.min(PASSADAS_MAXIMO, PASSADAS_BASE * Math.sqrt(this.ritmo)) * dt) % 1;
@@ -210,7 +233,7 @@
     this.proximoItem -= dt;
     if (this.proximoItem <= 0 && !this.terminado) {
       this._gerarItem();
-      this.proximoItem += Math.max(INTERVALO_MINIMO, ESPACAMENTO_ITENS / (VELOCIDADE_BASE * Math.pow(2, this.nivel)));
+      this.proximoItem += Math.max(INTERVALO_MINIMO, ESPACAMENTO_ITENS / (VELOCIDADE_BASE * fatorVelocidade(this.nivel)));
     }
 
     // Itens descem junto com a rua.
@@ -316,6 +339,7 @@
       x: PISTA_ESQ + LARGURA_FAIXA * (faixa + 0.5) + (Math.random() - 0.5) * 16,
       y: -TAMANHO_ITEM,
       perigo: perigo,
+      tamanho: perigo ? null : sortearTamanho(),
       imagem: imagem,
       idade: 0,
       fase: Math.random() * 6.28
@@ -345,7 +369,7 @@
       if (Som) { Som.dano(); }
     } else {
       // Ícone: vale os pontos vezes o multiplicador atual e estende a sequência.
-      delta = (this.opcoes.pontosAcerto || 100) * multiplicador;
+      delta = Math.round((this.opcoes.pontosAcerto || 100) * item.tamanho.pontos) * multiplicador;
       this.coletados += 1;
       this.sequencia += 1;
       this.maiorSequencia = Math.max(this.maiorSequencia, this.sequencia);
@@ -752,11 +776,11 @@
       var entrada = Math.min(1, item.idade * 5);
       var escala = entrada * (1 + Math.sin(item.idade * 6 + item.fase) * 0.04);
       var giro = item.perigo ? Math.sin(item.idade * 9 + item.fase) * 0.16 : 0;
-      var tamanho = TAMANHO_ITEM * escala * (item.perigo ? 1.12 : 1);
+      var tamanho = TAMANHO_ITEM * escala * (item.perigo ? 1.12 : item.tamanho.escala);
 
       ctx.fillStyle = 'rgba(0,0,0,0.2)';
       ctx.beginPath();
-      ctx.ellipse(item.x + 6, item.y + TAMANHO_ITEM * 0.48, tamanho * 0.42, tamanho * 0.14, 0, 0, 6.28);
+      ctx.ellipse(item.x + 6, item.y + tamanho * 0.48, tamanho * 0.42, tamanho * 0.14, 0, 0, 6.28);
       ctx.fill();
 
       ctx.save();

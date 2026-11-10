@@ -21,6 +21,7 @@
   var ATUALIZAR_ATRACAO_MS = 20000;
   var ESPERA_RESULTADO_MS = 6000;
   var CHAVE_PENDENTES = 'certel_pendentes';
+  var PREVIA = JSON.parse($('#rotas').textContent).previa;
 
   var estado = {
     tela: 'atracao',
@@ -93,7 +94,9 @@
   function aplicarConfig() {
     document.title = config.titulo;
     $$('[data-titulo]').forEach(function (el) { el.textContent = config.titulo; });
-    $$('[data-pontos-acerto]').forEach(function (el) { el.textContent = config.pontos_acerto; });
+    // Mesmas proporções dos tamanhos de ícone do motor (grande 2x, pequeno 35%).
+    $$('[data-pontos-grande]').forEach(function (el) { el.textContent = milhar(config.pontos_acerto * 2); });
+    $$('[data-pontos-pequeno]').forEach(function (el) { el.textContent = milhar(Math.round(config.pontos_acerto * 0.35)); });
     $$('[data-pontos-erro]').forEach(function (el) { el.textContent = config.pontos_erro; });
     $$('[data-duracao]').forEach(function (el) { el.textContent = config.duracao_segundos; });
     $$('[data-itens-mult]').forEach(function (el) { el.textContent = config.itens_por_multiplicador; });
@@ -546,11 +549,35 @@
     $('#operador-fechar').addEventListener('click', function () { $('#operador').classList.remove('aberto'); });
     $('#operador-recarregar').addEventListener('click', function () { window.location.reload(); });
     $('#operador-tela-cheia').addEventListener('click', function () {
-      var raiz = document.documentElement;
-      if (document.fullscreenElement) { document.exitFullscreen(); }
-      else if (raiz.requestFullscreen) { raiz.requestFullscreen().catch(function () {}); }
+      // Liga ou desliga a trava da tela cheia (desligada vale até recarregar).
+      estado.travarTelaCheia = !estado.travarTelaCheia;
+      if (estado.travarTelaCheia) { entrarTelaCheia(); }
+      else if (document.fullscreenElement) { document.exitFullscreen().catch(function () {}); }
+      desenharBotaoTelaCheia();
       $('#operador').classList.remove('aberto');
     });
+    desenharBotaoTelaCheia();
+  }
+
+  function desenharBotaoTelaCheia() {
+    $('#operador-tela-cheia').textContent = estado.travarTelaCheia ? 'Liberar tela cheia' : 'Travar tela cheia';
+  }
+
+  /* Tela cheia travada: o navegador só deixa entrar em tela cheia a partir de um
+     toque, então qualquer toque ou tecla com o jogo fora dela entra de novo.
+     Com o teclado travado (Chrome/Edge), sair pelo Esc exige segurá-lo. */
+  function entrarTelaCheia() {
+    var raiz = document.documentElement;
+    if (!estado.travarTelaCheia || document.fullscreenElement || !raiz.requestFullscreen) { return; }
+    raiz.requestFullscreen({ navigationUI: 'hide' }).then(function () {
+      if (navigator.keyboard && navigator.keyboard.lock) { navigator.keyboard.lock(['Escape']).catch(function () {}); }
+    }).catch(function () {});
+  }
+
+  function travarTelaCheia() {
+    document.addEventListener('pointerdown', entrarTelaCheia, true);
+    document.addEventListener('keydown', entrarTelaCheia, true);
+    entrarTelaCheia(); // só funciona se o navegador já permitir (ex.: modo quiosque)
   }
 
   function modoQuiosque() {
@@ -620,8 +647,10 @@
     $('#resultado-de-novo').addEventListener('click', jogarDeNovo);
     $('#resultado-encerrar').addEventListener('click', irParaAtracao);
 
+    estado.travarTelaCheia = !PREVIA;
     ligarOperador();
     modoQuiosque();
+    travarTelaCheia();
 
     carregarImagens().then(function (imagens) {
       estado.imagens = imagens;

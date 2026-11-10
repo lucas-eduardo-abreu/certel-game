@@ -160,11 +160,11 @@ class ConfiguracaoJogo(AbstractBaseModel):
     Attributes:
         titulo: Nome do jogo exibido nos totens e no telão.
         duracao_segundos: Duração de cada partida.
-        pontos_acerto: Pontos ganhos por ícone Certel coletado.
+        pontos_acerto: Pontos do ícone médio (o grande vale o dobro; o pequeno, 35%).
         pontos_erro: Pontos perdidos por obstáculo atingido.
         itens_por_multiplicador: Ícones seguidos para subir o multiplicador.
-        pontos_por_dobra: Pontos para a rua dobrar de velocidade.
-        dobras_maximas: Quantas vezes a velocidade pode dobrar.
+        pontos_por_dobra: Pontos para a rua acelerar meia velocidade inicial.
+        dobras_maximas: Quantas vezes a rua pode acelerar.
         perigos_inicial: Proporção de obstáculos no início da partida, em %.
         perigos_aumento: Quanto essa proporção sobe a cada marca de pontos.
         pedir_telefone: Se o totem pede telefone e consentimento.
@@ -181,7 +181,10 @@ class ConfiguracaoJogo(AbstractBaseModel):
         validators=[MinValueValidator(15), MaxValueValidator(180)],
     )
     pontos_acerto = models.PositiveSmallIntegerField(
-        "pontos por ícone", default=100, validators=[MinValueValidator(1)]
+        "pontos por ícone",
+        default=100,
+        validators=[MinValueValidator(1)],
+        help_text="Vale para o ícone médio. O grande vale o dobro e o pequeno, 35% (100: 200, 100 e 35).",
     )
     pontos_erro = models.PositiveSmallIntegerField("pontos perdidos por obstáculo", default=300)
     itens_por_multiplicador = models.PositiveSmallIntegerField(
@@ -195,21 +198,21 @@ class ConfiguracaoJogo(AbstractBaseModel):
         ),
     )
     pontos_por_dobra = models.PositiveIntegerField(
-        "pontos para dobrar a velocidade",
+        "pontos para acelerar",
         default=1000,
         help_text=(
-            "A cada quantos pontos a rua dobra de velocidade "
-            "(1000: com 1000 fica 2x, com 2000 fica 4x) e a proporção de "
+            "A cada quantos pontos a rua ganha meia velocidade inicial "
+            "(1000: com 1000 fica 1,5x, com 2000 fica 2x) e a proporção de "
             "obstáculos aumenta. Use 0 para desligar as duas coisas."
         ),
     )
     dobras_maximas = models.PositiveSmallIntegerField(
-        "limite de dobras de velocidade",
+        "limite de acelerações",
         default=2,
         validators=[MaxValueValidator(4)],
         help_text=(
-            "Quantas vezes a velocidade pode dobrar: 2 = até 4x, 3 = até 8x. "
-            "Acima de 2, os itens cruzam a tela em menos de meio segundo."
+            "Quantas vezes a rua pode acelerar: 1 = até 1,5x, 2 = até 2x, "
+            "4 = até 3x."
         ),
     )
     perigos_inicial = models.PositiveSmallIntegerField(

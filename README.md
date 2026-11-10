@@ -184,8 +184,15 @@ Regras:
 3. **Menu do operador:** cinco toques seguidos (em até 3 segundos) no canto
    superior esquerdo da tela de espera ("Toque para jogar"). É o canto da
    área do jogo: em monitor deitado, o canto da faixa verde, não o da tela.
-   Tem tela cheia, recarregar e sair do totem.
-4. **Sair sem o menu:** abra `/sair/` (ex.:
+   Tem liberar/travar tela cheia, recarregar e sair do totem.
+4. **Tela cheia travada:** depois do login, o primeiro toque na tela já
+   coloca o jogo em tela cheia, e se alguém sair dela (Esc, F11) o próximo
+   toque volta. O navegador não deixa uma página impedir a saída de vez: no
+   Chrome/Edge o Esc precisa ser segurado. Para travar de verdade, use o modo
+   quiosque do item 2. Para sair da trava (manutenção), use "Liberar tela
+   cheia" no menu do operador; ela volta ao recarregar a página. Na prévia do
+   admin a trava fica desligada.
+5. **Sair sem o menu:** abra `/sair/` (ex.:
    https://certel-game.onrender.com/sair/) e confirme. Vale para qualquer
    login.
 
