@@ -308,7 +308,9 @@ def participantes_do_sorteio(tipo, dia=None):
     """Jogadores que concorrem na roleta.
 
     No diário, quem tem partida válida finalizada no dia; no geral, quem tem
-    qualquer partida válida. Quem já ganhou no mesmo escopo fica de fora.
+    qualquer partida válida, ou só o top N do ranking quando
+    ``sorteio_geral_top`` estiver configurado. Quem já ganhou no mesmo escopo
+    fica de fora (no top N, a vaga não passa para o próximo do ranking).
 
     Args:
         tipo: Tipo da roleta.
@@ -321,8 +323,13 @@ def participantes_do_sorteio(tipo, dia=None):
     partidas = _partidas_validas()
     if dia is not None:
         partidas = partidas.filter(finalizada_em__date=dia)
+    else:
+        top = ConfiguracaoJogo.carregar().sorteio_geral_top
+        if top:
+            partidas = _melhores_partidas()[:top]
+    jogadores = list(partidas.values_list("jogador", flat=True))
     ja_ganharam = Sorteio.objects.filter(tipo=tipo, dia=dia).values("vencedor")
-    return Jogador.objects.filter(pk__in=partidas.values("jogador")).exclude(pk__in=ja_ganharam)
+    return Jogador.objects.filter(pk__in=jogadores).exclude(pk__in=ja_ganharam)
 
 
 @transaction.atomic

@@ -1,7 +1,8 @@
-/* Roleta de sorteio do telão.
-   O vencedor é sorteado no servidor (POST /api/roleta/); a tela só gira a roda
-   até o nome que veio na resposta. Tipos: "diario" (quem jogou no dia escolhido)
-   e "geral" (todos). Quem já foi sorteado não entra de novo no mesmo sorteio. */
+/* Sorteio do telão: os nomes passam na vertical e param no vencedor.
+   O vencedor é sorteado no servidor (POST /api/roleta/); a tela só anima a
+   faixa até o nome que veio na resposta. Tipos: "diario" (quem jogou no dia
+   escolhido) e "geral" (todos). Quem já foi sorteado não entra de novo no
+   mesmo sorteio. */
 (function () {
   'use strict';
 
@@ -11,24 +12,19 @@
   var csrf = meta ? meta.content : '';
 
   var ATUALIZAR_MS = 15000;
-  var MIN_FATIAS = 8;
-  var GIRO_LIVRE_MS = 1200;          // giro mínimo antes de começar a frear
-  var VELOCIDADE = 2.2 * 2 * Math.PI; // rad/s no giro livre
-  var VOLTAS_FREANDO = 4;
-  var CORES = [
-    { fundo: '#04a64b', texto: '#ffffff' },
-    { fundo: '#004899', texto: '#ffffff' },
-    { fundo: '#ffc20e', texto: '#000000' },
-    { fundo: '#ffffff', texto: '#000000' }
-  ];
+  var LINHAS = 7;              // nomes visíveis na janela (ímpar)
+  var CENTRO = (LINHAS - 1) / 2;
+  var GIRO_LIVRE_MS = 1500;    // tempo mínimo passando rápido antes de frear
+  var VELOCIDADE = 16;         // nomes por segundo no giro livre
+  var LINHAS_FREANDO = 30;     // quantos nomes ainda passam enquanto freia
 
-  var canvas = $('#roleta-canvas');
-  var ctx = canvas.getContext('2d');
+  var janela = $('#sorteio-janela');
+  var faixa = $('#sorteio-faixa');
   var estado = {
     tipo: dados.tipo,
     dia: null, // sem dia, o servidor usa hoje (fuso do evento)
-    fatias: [],
-    angulo: 0,
+    nomes: [],
+    pos: 0,    // qual nome está no topo da janela (a fração é quanto já subiu)
     girando: false
   };
 
@@ -38,6 +34,8 @@
     if (texto !== undefined) { el.textContent = texto; }
     return el;
   }
+
+  function modulo(a, n) { return ((a % n) + n) % n; }
 
   function diaFormatado(iso) {
     var p = iso.split('-');
@@ -66,68 +64,36 @@
     });
   }
 
-  /* ---------------- Desenho da roda ---------------- */
+  /* ---------------- Faixa de nomes ----------------
+     Uma faixa "infinita": só existem LINHAS + 1 elementos, e a cada quadro
+     eles recebem os nomes a partir de `estado.pos`. O nome da linha CENTRO
+     é o que fica sob a mira. */
 
-  function ajustarCanvas() {
-    var lado = canvas.getBoundingClientRect().width;
-    var escala = window.devicePixelRatio || 1;
-    canvas.width = Math.round(lado * escala);
-    canvas.height = Math.round(lado * escala);
-    desenhar();
+  function montarLinhas() {
+    faixa.textContent = '';
+    for (var i = 0; i <= LINHAS; i++) { faixa.appendChild(elemento('li')); }
   }
 
   function desenhar() {
-    var tamanho = canvas.width;
-    var raio = tamanho / 2;
-    var borda = Math.max(4, tamanho * 0.012);
-    ctx.clearRect(0, 0, tamanho, tamanho);
-    ctx.save();
-    ctx.translate(raio, raio);
-
-    var fatias = estado.fatias.length ? estado.fatias : ['Ninguém para sortear'];
-    var passo = 2 * Math.PI / fatias.length;
-    var r = raio - borda;
-    var fonte = Math.max(12, Math.min(r * 0.085, r * passo * 0.42));
-    ctx.font = '800 ' + fonte + 'px Boston, Montserrat, "Segoe UI", Arial, sans-serif';
-    ctx.textBaseline = 'middle';
-    ctx.textAlign = 'right';
-
-    fatias.forEach(function (nome, i) {
-      var inicio = estado.angulo + i * passo;
-      var cor = estado.fatias.length ? CORES[i % CORES.length] : { fundo: '#a9b0c6', texto: '#000000' };
-      // Com número ímpar de fatias, evita duas fatias da mesma cor lado a lado.
-      if (estado.fatias.length && i === fatias.length - 1 && i % CORES.length === 0) { cor = CORES[2]; }
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.arc(0, 0, r, inicio, inicio + passo);
-      ctx.closePath();
-      ctx.fillStyle = cor.fundo;
-      ctx.fill();
-      ctx.lineWidth = borda * 0.5;
-      ctx.strokeStyle = '#000000';
-      ctx.stroke();
-
-      ctx.save();
-      ctx.rotate(inicio + passo / 2);
-      ctx.fillStyle = cor.texto;
-      var texto = nome.length > 16 ? nome.slice(0, 15) + '…' : nome;
-      ctx.fillText(texto, r * 0.92, 0);
-      ctx.restore();
-    });
-
-    ctx.beginPath();
-    ctx.arc(0, 0, r, 0, 2 * Math.PI);
-    ctx.lineWidth = borda;
-    ctx.strokeStyle = '#000000';
-    ctx.stroke();
-    ctx.restore();
+    var linhas = faixa.children;
+    var nomes = estado.nomes;
+    var base = Math.floor(estado.pos);
+    var fracao = estado.pos - base;
+    var noMeio = CENTRO + (fracao >= 0.5 ? 1 : 0);
+    for (var i = 0; i < linhas.length; i++) {
+      var texto = '';
+      if (nomes.length) { texto = nomes[modulo(base + i, nomes.length)]; }
+      else if (i === CENTRO) { texto = 'Ninguém para sortear'; }
+      linhas[i].textContent = texto;
+      linhas[i].classList.toggle('centro', i === noMeio);
+    }
+    // Cada linha ocupa 1/(LINHAS + 1) da altura da faixa.
+    faixa.style.transform = 'translateY(' + (-fracao * 100 / (LINHAS + 1)) + '%)';
   }
 
-  /* Monta as fatias: repete os nomes até um mínimo, para a roda não ficar vazia. */
-  function montarFatias(nomes) {
-    var fatias = nomes.slice();
-    while (fatias.length && fatias.length < MIN_FATIAS) { fatias = fatias.concat(nomes); }
-    estado.fatias = fatias.slice(0, Math.max(MIN_FATIAS, nomes.length));
+  function montarNomes(nomes) {
+    estado.nomes = nomes.slice();
+    estado.pos = estado.nomes.length ? modulo(Math.round(estado.pos), estado.nomes.length) : 0;
     desenhar();
   }
 
@@ -172,15 +138,17 @@
     estado.dia = corpo.dia;
     if (corpo.tipo === 'diario') { desenharDias(corpo.dias); }
     var total = corpo.total;
-    $('#roleta-total').textContent = total === 1
+    var texto = total === 1
       ? '1 pessoa concorrendo'
       : total.toLocaleString('pt-BR') + ' pessoas concorrendo';
+    if (corpo.somente_top) { texto += ' · top ' + corpo.somente_top + ' do ranking'; }
+    $('#roleta-total').textContent = texto;
     desenharGanhadores(corpo.sorteios);
-    montarFatias(corpo.nomes);
+    montarNomes(corpo.nomes);
     $('#roleta-girar').disabled = !total;
   }
 
-  /* Não redesenha durante o giro nem com o vencedor na tela (a roda fica parada nele). */
+  /* Não redesenha durante o sorteio nem com o vencedor na tela (a faixa fica parada nele). */
   function ocupado() {
     return estado.girando || !$('#roleta-resultado').hidden;
   }
@@ -192,7 +160,7 @@
       .catch(function (erro) { $('#roleta-erro').textContent = erro.message; });
   }
 
-  /* ---------------- Giro ---------------- */
+  /* ---------------- Sorteio ---------------- */
 
   function animar(passo) {
     return new Promise(function (resolver) {
@@ -208,37 +176,34 @@
     });
   }
 
-  /* Ângulo final para que o meio da fatia `indice` pare sob o ponteiro (topo). */
-  function anguloAlvo(indice) {
-    var passo = 2 * Math.PI / estado.fatias.length;
-    var folga = (Math.random() - 0.5) * passo * 0.6;
-    var alvo = -Math.PI / 2 - (indice + 0.5) * passo + folga;
-    var minimo = estado.angulo + VOLTAS_FREANDO * 2 * Math.PI;
-    while (alvo < minimo) { alvo += 2 * Math.PI; }
-    return alvo;
+  /* Posição final (inteira) que deixa o nome `indice` sob a mira. */
+  function posicaoAlvo(indice) {
+    var alvo = Math.ceil(estado.pos + LINHAS_FREANDO);
+    return alvo + modulo(indice - CENTRO - alvo, estado.nomes.length);
   }
 
   /* Freia da velocidade atual até `alvo` com ease-out cúbico (a derivada inicial casa com o giro livre). */
   function frearAte(alvo) {
-    var inicio = estado.angulo;
+    var inicio = estado.pos;
     var distancia = alvo - inicio;
     var duracao = 3 * distancia / VELOCIDADE;
     var t0 = null;
     return animar(function (agora) {
       if (t0 === null) { t0 = agora; }
       var t = Math.min(1, (agora - t0) / 1000 / duracao);
-      estado.angulo = inicio + distancia * (1 - Math.pow(1 - t, 3));
+      estado.pos = inicio + distancia * (1 - Math.pow(1 - t, 3));
+      janela.classList.toggle('rapido', t < 0.45);
       return t < 1;
     });
   }
 
-  /* Coloca o vencedor em uma fatia (se já estiver na roda, usa uma das dele). */
-  function fatiaDoVencedor(nome) {
+  /* Garante o vencedor na faixa (a lista é uma amostra) e devolve a posição dele. */
+  function indiceDoVencedor(nome) {
     var indices = [];
-    estado.fatias.forEach(function (n, i) { if (n === nome) { indices.push(i); } });
+    estado.nomes.forEach(function (n, i) { if (n === nome) { indices.push(i); } });
     if (indices.length) { return indices[Math.floor(Math.random() * indices.length)]; }
-    var indice = Math.floor(Math.random() * estado.fatias.length);
-    estado.fatias[indice] = nome;
+    var indice = Math.floor(Math.random() * estado.nomes.length);
+    estado.nomes[indice] = nome;
     return indice;
   }
 
@@ -251,20 +216,22 @@
     $('#roleta-resultado-fechar').focus();
   }
 
-  // No celular a página rola: traz a roda inteira para a tela antes de girar.
-  function mostrarRoda() {
-    var caixa = $('.roleta-roda').getBoundingClientRect();
+  // No celular a página rola: traz a janela inteira para a tela antes de sortear.
+  function mostrarJanela() {
+    var caixa = janela.getBoundingClientRect();
     if (caixa.top < 0 || caixa.bottom > window.innerHeight) {
-      $('.roleta-roda').scrollIntoView({ block: 'center', behavior: 'smooth' });
+      janela.scrollIntoView({ block: 'center', behavior: 'smooth' });
     }
   }
 
-  function girar() {
-    if (estado.girando || !estado.fatias.length) { return; }
+  function sortear() {
+    if (estado.girando || !estado.nomes.length) { return; }
     estado.girando = true;
     $('#roleta-girar').disabled = true;
     $('#roleta-erro').textContent = '';
-    mostrarRoda();
+    janela.classList.remove('parou');
+    janela.classList.add('rapido');
+    mostrarJanela();
 
     var resposta = null;
     var inicio = performance.now();
@@ -273,22 +240,25 @@
       body: JSON.stringify({ tipo: estado.tipo, dia: estado.dia })
     }).then(function (corpo) { resposta = { ok: corpo.sorteio }; }, function (erro) { resposta = { erro: erro }; });
 
-    // Gira livre até o servidor responder (e por um tempo mínimo).
+    // Os nomes passam rápido até o servidor responder (e por um tempo mínimo).
     animar(function (agora, dt) {
-      estado.angulo += VELOCIDADE * dt;
+      estado.pos += VELOCIDADE * dt;
       return !(resposta && agora - inicio >= GIRO_LIVRE_MS);
     })
       .then(function () { return pedido; })
       .then(function () {
         if (resposta.erro) {
           $('#roleta-erro').textContent = resposta.erro.message;
-          return frearAte(estado.angulo + 2 * Math.PI);
+          return frearAte(Math.ceil(estado.pos + 6));
         }
-        var indice = fatiaDoVencedor(resposta.ok.nome_curto);
-        return frearAte(anguloAlvo(indice)).then(function () { mostrarVencedor(resposta.ok); });
+        var indice = indiceDoVencedor(resposta.ok.nome_curto);
+        return frearAte(posicaoAlvo(indice)).then(function () {
+          janela.classList.add('parou');
+          mostrarVencedor(resposta.ok);
+        });
       })
       .then(function () {
-        estado.angulo %= 2 * Math.PI;
+        janela.classList.remove('rapido');
         estado.girando = false;
         $('#roleta-girar').disabled = false;
         return atualizar();
@@ -298,7 +268,7 @@
   /* ---------------- Ligações ---------------- */
 
   function iniciar() {
-    var titulos = { diario: 'Roleta do dia', geral: 'Roleta geral' };
+    var titulos = { diario: 'Sorteio do dia', geral: 'Sorteio geral' };
     $('#roleta-titulo').textContent = titulos[estado.tipo];
     document.title = titulos[estado.tipo] + ' — ' + document.title.split(' — ').pop();
     $('#roleta-dia-campo').hidden = estado.tipo !== 'diario';
@@ -317,15 +287,16 @@
       estado.dia = evento.target.value;
       atualizar();
     });
-    $('#roleta-girar').addEventListener('click', girar);
+    $('#roleta-girar').addEventListener('click', sortear);
     $('#roleta-resultado-fechar').addEventListener('click', function () {
       $('#roleta-resultado').hidden = true;
+      janela.classList.remove('parou');
       $('#roleta-girar').focus();
       atualizar();
     });
 
-    window.addEventListener('resize', ajustarCanvas);
-    ajustarCanvas();
+    montarLinhas();
+    desenhar();
     atualizar();
     setInterval(atualizar, ATUALIZAR_MS);
   }

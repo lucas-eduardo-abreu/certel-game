@@ -170,6 +170,8 @@ class ConfiguracaoJogo(AbstractBaseModel):
         pedir_telefone: Se o totem pede telefone e consentimento.
         texto_consentimento: Texto do consentimento exibido no cadastro.
         tamanho_ranking: Quantas posições o ranking mostra.
+        sorteio_geral_top: Se maior que zero, só o top N do ranking concorre
+            no sorteio geral.
         som_ativo: Liga ou desliga os efeitos sonoros dos totens.
         musica_ativa: Liga ou desliga a música durante a partida.
     """
@@ -243,8 +245,17 @@ class ConfiguracaoJogo(AbstractBaseModel):
     )
     tamanho_ranking = models.PositiveSmallIntegerField(
         "posições no ranking",
-        default=10,
+        default=5,
         validators=[MinValueValidator(3), MaxValueValidator(50)],
+    )
+    sorteio_geral_top = models.PositiveSmallIntegerField(
+        "sorteio geral só entre o top",
+        default=0,
+        validators=[MaxValueValidator(50)],
+        help_text=(
+            "0: todos que jogaram concorrem no sorteio geral. 5: só o top 5 do "
+            "ranking geral concorre. Não muda o sorteio do dia."
+        ),
     )
     som_ativo = models.BooleanField("efeitos sonoros ligados", default=True)
     musica_ativa = models.BooleanField("música ligada", default=True)

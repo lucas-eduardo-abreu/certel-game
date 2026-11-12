@@ -9,7 +9,7 @@ from django.utils import timezone
 from model_bakery import baker
 
 from jogo import services
-from jogo.models import Jogador, Partida, Sorteio
+from jogo.models import ConfiguracaoJogo, Jogador, Partida, Sorteio
 
 from .fabricas import criar_partida_finalizada, criar_totem, criar_usuario_ranking
 
@@ -91,6 +91,23 @@ class SorteioServiceTest(TestCase):
         self.assertIsNone(sorteio.dia)
         self.assertEqual(sorteio.participantes, 3)
 
+    def test_geral_so_top_do_ranking(self):
+        """Com ``sorteio_geral_top``, o geral fica só com o top N; o diário não muda."""
+        configuracao = ConfiguracaoJogo.carregar()
+        configuracao.sorteio_geral_top = 1
+        configuracao.save()
+        self.assertEqual(self.participantes(Sorteio.Tipo.GERAL), {self.caio})
+        self.assertEqual(self.participantes(Sorteio.Tipo.DIARIO, self.hoje), {self.ana, self.bia})
+
+        # Quem ganhou sai, e a vaga não passa para o próximo do ranking.
+        self.assertEqual(services.sortear(Sorteio.Tipo.GERAL).vencedor, self.caio)
+        self.assertEqual(self.participantes(Sorteio.Tipo.GERAL), set())
+
+    def test_geral_top_zero_e_todos(self):
+        """``sorteio_geral_top`` em 0 (padrão) mantém todos no geral."""
+        self.assertEqual(ConfiguracaoJogo.carregar().sorteio_geral_top, 0)
+        self.assertEqual(len(self.participantes(Sorteio.Tipo.GERAL)), 3)
+
     def test_excluir_sorteio_devolve_o_vencedor(self):
         """Excluir o sorteio (admin) põe o vencedor de volta na roleta."""
         sorteio = services.sortear(Sorteio.Tipo.DIARIO, self.ontem)
@@ -144,6 +161,15 @@ class RoletaApiTest(TestCase):
         self.assertEqual(dados["total"], 3)
         self.assertCountEqual(dados["nomes"], ["Ana S.", "Bia L.", "Caio"])
         self.assertEqual(dados["sorteios"], [])
+        self.assertEqual(dados["somente_top"], 0)
+
+    def test_estado_geral_avisa_o_top(self):
+        """O geral informa o limite do top N; o diário não."""
+        configuracao = ConfiguracaoJogo.carregar()
+        configuracao.sorteio_geral_top = 5
+        configuracao.save()
+        self.assertEqual(self.client.get(self.url, {"tipo": "geral"}).json()["somente_top"], 5)
+        self.assertEqual(self.client.get(self.url, {"tipo": "diario"}).json()["somente_top"], 0)
 
     def test_girar_e_listar(self):
         """O giro devolve o vencedor e entra na lista de sorteados."""

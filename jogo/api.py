@@ -229,6 +229,12 @@ class RoletaView(APIView):
                 "dia": dia.isoformat() if dia else None,
                 "dias": [d.isoformat() for d in services.dias_com_partidas()],
                 "total": participantes.count(),
+                # Sorteio geral limitado ao top N do ranking (0 = todos).
+                "somente_top": (
+                    ConfiguracaoJogo.carregar().sorteio_geral_top
+                    if tipo == Sorteio.Tipo.GERAL
+                    else 0
+                ),
                 "nomes": nomes,
                 "sorteios": [_sorteio_json(s) for s in services.sorteios_realizados(tipo, dia)],
             }

@@ -1,6 +1,6 @@
 {% extends "jogo/base.html" %}
 {% load static %}
-{% block titulo %}Roleta — {{ titulo }}{% endblock %}
+{% block titulo %}Sorteio — {{ titulo }}{% endblock %}
 {% block estilos %}
   <meta name="csrf-token" content="{{ csrf_token }}">
   <link rel="stylesheet" href="{% static 'jogo/css/ranking.css' %}">
@@ -12,7 +12,7 @@
   <aside class="telao-marca roleta-marca">
     <div class="telao-topo">
       <img class="logo-certel" src="{% static 'jogo/img/logo_certel_branco.svg' %}" alt="Certel Cooperativa">
-      <h1 class="titulo-traco" id="roleta-titulo">Roleta</h1>
+      <h1 class="titulo-traco" id="roleta-titulo">Sorteio</h1>
     </div>
     <div class="roleta-abas" role="tablist" aria-label="Tipo de sorteio">
       <button type="button" role="tab" data-tipo="diario">Do dia</button>
@@ -29,12 +29,11 @@
     </section>
   </aside>
   <section class="roleta-palco">
-    <div class="roleta-roda">
-      <canvas id="roleta-canvas" aria-label="Roleta com os nomes dos participantes" role="img"></canvas>
-      <div class="roleta-ponteiro" aria-hidden="true"></div>
-      <img class="roleta-centro" src="{% static 'jogo/img/mascote_cabeca.png' %}" alt="">
+    <div class="sorteio-janela" id="sorteio-janela" role="img" aria-label="Nomes dos participantes passando">
+      <ul class="sorteio-faixa" id="sorteio-faixa" aria-hidden="true"></ul>
+      <div class="sorteio-mira" aria-hidden="true"></div>
     </div>
-    <button class="botao roleta-girar" type="button" id="roleta-girar">Girar</button>
+    <button class="botao roleta-girar" type="button" id="roleta-girar">Sortear</button>
     <p class="roleta-erro" id="roleta-erro" role="alert"></p>
   </section>
 </main>

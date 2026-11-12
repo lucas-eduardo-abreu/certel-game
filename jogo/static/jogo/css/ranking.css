@@ -78,10 +78,11 @@ body {
   -webkit-text-stroke-width: min(1.3vh, 12px);
 }
 
+/* Top 5: cinco linhas grandes dividindo a altura. */
 .telao-lista ol {
   display: grid;
   grid-auto-rows: 1fr;
-  gap: 1.1vh;
+  gap: 2vh;
   margin: 0;
   padding: 0;
   min-height: 0;
@@ -90,17 +91,17 @@ body {
 
 .telao-lista li {
   display: grid;
-  grid-template-columns: 7vh 1fr auto auto;
+  grid-template-columns: 11vh 1fr auto auto;
   align-items: center;
   gap: 1.6vw;
   min-height: 0;
-  max-height: 9vh;
-  padding: 0 2vw 0 1vw;
+  max-height: 14vh;
+  padding: 0 2.4vw 0 1.2vw;
   background: var(--branco);
-  border: 4px solid var(--preto);
+  border: 5px solid var(--preto);
   border-radius: 999px;
-  box-shadow: 0 0.7vh 0 var(--preto);
-  font-size: 4.2vh;
+  box-shadow: 0 0.9vh 0 var(--preto);
+  font-size: 6vh;
   font-weight: 800;
   line-height: 1;
 }
@@ -108,13 +109,13 @@ body {
 .telao-lista .lugar {
   display: grid;
   place-items: center;
-  width: 5.6vh;
-  height: 5.6vh;
-  border: 3px solid var(--preto);
+  width: 9vh;
+  height: 9vh;
+  border: 4px solid var(--preto);
   border-radius: 50%;
   background: var(--azul);
   color: var(--branco);
-  font-size: 3.2vh;
+  font-size: 4.8vh;
 }
 
 .telao-lista li:nth-child(-n + 3) .lugar {
@@ -132,16 +133,16 @@ body {
 .telao-lista .totem {
   padding-top: 0.4vh;
   color: #5b647c;
-  font-size: 2.6vh;
+  font-size: 3.4vh;
   font-weight: 700;
 }
 
 .telao-lista .pontos {
   padding-top: 0.5vh;
-  min-width: 14vh;
+  min-width: 20vh;
   text-align: right;
   color: var(--verde-escuro);
-  font-size: 4.8vh;
+  font-size: 6.8vh;
   font-variant-numeric: tabular-nums;
 }
 
@@ -195,10 +196,10 @@ body {
   .telao-disco { display: none; }
   .telao-lista { padding: 2.4vh 4vw; }
   .telao-lista h2 { font-size: 5vh; }
-  .telao-lista li { font-size: 2.8vh; grid-template-columns: 5vh 1fr auto auto; max-height: 7vh; gap: 2vw; }
-  .telao-lista .lugar { width: 4.2vh; height: 4.2vh; font-size: 2.4vh; }
-  .telao-lista .pontos { font-size: 3.2vh; min-width: 9vh; }
-  .telao-lista .totem { font-size: 1.9vh; }
+  .telao-lista li { font-size: 3.8vh; grid-template-columns: 7vh 1fr auto auto; max-height: 11vh; gap: 2vw; }
+  .telao-lista .lugar { width: 6vh; height: 6vh; font-size: 3.2vh; }
+  .telao-lista .pontos { font-size: 4.2vh; min-width: 12vh; }
+  .telao-lista .totem { font-size: 2.4vh; }
 }
 
 /* Menu do telão (ranking e roleta): escondido até mexer o mouse. */

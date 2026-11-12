@@ -1,5 +1,5 @@
-/* Roleta de sorteio. Usa a mesma moldura do telão do ranking (ranking.css):
-   marca à esquerda, roda à direita. */
+/* Sorteio. Usa a mesma moldura do telão do ranking (ranking.css):
+   marca à esquerda, janela com os nomes à direita. */
 
 .roleta-marca {
   grid-template-rows: auto auto auto auto 1fr;
@@ -117,7 +117,7 @@
   font-size: 2vh;
 }
 
-/* Palco da roda */
+/* Palco do sorteio */
 .roleta-palco {
   display: grid;
   grid-template-rows: 1fr auto auto;
@@ -129,52 +129,97 @@
   background: radial-gradient(circle at 50% 40%, var(--azul) 0, var(--azul-escuro) 75%);
 }
 
-.roleta-roda {
+/* Janela do sorteio: 7 nomes visíveis, o do meio fica sob a mira amarela.
+   A faixa tem 8 linhas (uma a mais para o nome que está entrando). */
+.sorteio-janela {
   position: relative;
-  width: min(72vh, 56vw);
-  aspect-ratio: 1;
-}
-
-.roleta-roda canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
+  width: min(110vh, 56vw);
+  height: min(70vh, 60vw);
+  overflow: hidden;
+  border: 0.8vh solid var(--preto);
+  border-radius: var(--raio);
+  background: var(--branco);
   box-shadow: 0 1.4vh 0 var(--preto);
 }
 
-/* Ponteiro no topo, apontando para baixo: triângulo preto com miolo vermelho. */
-.roleta-ponteiro {
+.sorteio-faixa {
   position: absolute;
-  top: -2.4vh;
-  left: 50%;
-  width: 7vh;
-  height: 8vh;
-  transform: translateX(-50%);
-  background: var(--preto);
-  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  inset: 0 0 auto;
+  height: calc(100% * 8 / 7);
+  display: grid;
+  grid-template-rows: repeat(8, 1fr);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  will-change: transform;
+  -webkit-mask-image: linear-gradient(transparent 0, #000 22%, #000 66%, transparent 88%);
+  mask-image: linear-gradient(transparent 0, #000 22%, #000 66%, transparent 88%);
 }
 
-.roleta-ponteiro::after {
+.sorteio-faixa li {
+  display: grid;
+  place-items: center;
+  padding: 0 3vw;
+  overflow: hidden;
+  color: #5b647c;
+  font-size: min(5vh, 3vw);
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.sorteio-faixa li.centro {
+  color: var(--preto);
+  font-size: min(7vh, 4.2vw);
+}
+
+/* Passando rápido: um leve borrão de movimento. */
+.sorteio-janela.rapido .sorteio-faixa li {
+  filter: blur(0.15vh);
+}
+
+.sorteio-mira {
+  position: absolute;
+  left: 1.2vw;
+  right: 1.2vw;
+  top: calc(100% * 3 / 7);
+  height: calc(100% / 7);
+  border: 0.7vh solid var(--preto);
+  border-radius: 999px;
+  background: rgba(255, 194, 14, 0.35);
+  pointer-events: none;
+}
+
+/* Setas pretas dos dois lados da mira. */
+.sorteio-mira::before,
+.sorteio-mira::after {
   content: "";
   position: absolute;
-  inset: 0.7vh 1.2vh 1.6vh;
-  background: var(--perigo);
-  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  top: 50%;
+  width: 3vh;
+  height: 4vh;
+  transform: translateY(-50%);
+  background: var(--preto);
 }
 
-.roleta-centro {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 22%;
-  aspect-ratio: 1;
-  transform: translate(-50%, -50%);
-  border: 0.8vh solid var(--preto);
-  border-radius: 50%;
-  background: var(--branco);
-  object-fit: contain;
-  pointer-events: none;
+.sorteio-mira::before {
+  left: -1.2vw;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+.sorteio-mira::after {
+  right: -1.2vw;
+  clip-path: polygon(100% 0, 0 50%, 100% 100%);
+}
+
+.sorteio-janela.parou .sorteio-mira {
+  background: var(--amarelo);
+  animation: sorteio-piscar 0.5s ease-in-out 3;
+}
+
+@keyframes sorteio-piscar {
+  50% { background: rgba(255, 194, 14, 0.35); }
 }
 
 .roleta-girar {
@@ -240,10 +285,10 @@
 @media (orientation: portrait) {
   .roleta-marca .telao-topo .logo-certel { width: 20vh; }
   .roleta-ganhadores { display: none; }
-  .roleta-roda { width: min(46vh, 88vw); }
+  .sorteio-janela { width: 88vw; height: min(48vh, 110vw); }
 }
 
-/* Celular e tablet pequeno: roda em cima, controles e sorteados embaixo, com
+/* Celular e tablet pequeno: janela em cima, controles e sorteados embaixo, com
    rolagem. A moldura geral (menu, rolagem) vem de ranking.css. */
 @media (max-width: 820px), (max-height: 500px) {
   .roleta-marca {
@@ -295,11 +340,17 @@
     padding: 36px 16px 16px;
   }
 
-  .roleta-roda { width: min(88vw, 420px, 70vh); }
-  .roleta-roda canvas { box-shadow: 0 8px 0 var(--preto); }
-  .roleta-ponteiro { top: -18px; width: 44px; height: 50px; }
-  .roleta-ponteiro::after { inset: 5px 8px 11px; }
-  .roleta-centro { border-width: 5px; }
+  .sorteio-janela {
+    width: min(100%, 520px);
+    height: min(60vh, 380px);
+    border-width: 5px;
+    box-shadow: 0 8px 0 var(--preto);
+  }
+  .sorteio-faixa li { padding: 0 24px; font-size: 18px; }
+  .sorteio-faixa li.centro { font-size: 24px; }
+  .sorteio-mira { left: 10px; right: 10px; border-width: 4px; }
+  .sorteio-mira::before { left: -10px; width: 14px; height: 20px; }
+  .sorteio-mira::after { right: -10px; width: 14px; height: 20px; }
 
   .roleta-girar { min-height: 64px; padding: 0 40px; font-size: 28px; }
   .roleta-erro { min-height: 0; font-size: 16px; }
@@ -312,10 +363,9 @@
   .roleta-resultado .botao { min-height: 60px; font-size: 26px; }
 }
 
-/* Celular deitado: roda menor para caber junto com o botão Girar. */
+/* Celular deitado: janela mais baixa para caber junto com o botão Sortear. */
 @media (max-height: 500px) {
   .roleta-palco { padding-top: 26px; gap: 10px; }
-  .roleta-roda { width: min(88vw, 52vh); }
-  .roleta-ponteiro { top: -14px; width: 34px; height: 40px; }
+  .sorteio-janela { height: 58vh; }
   .roleta-girar { min-height: 52px; font-size: 24px; }
 }

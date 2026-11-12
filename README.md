@@ -74,7 +74,7 @@ python manage.py runserver
   "Acessos" abaixo)
 - Totem: http://localhost:8000/ — login `totem1` (ou `totem2`, `totem3`), senha de `TOTENS_SENHA`
 - Telão do ranking: http://localhost:8000/ranking/ — login `ranking`, senha de `RANKING_SENHA`
-- Roleta: http://localhost:8000/roleta/ (do dia) e `/roleta/?tipo=geral` — login `ranking`
+- Sorteio: http://localhost:8000/roleta/ (do dia) e `/roleta/?tipo=geral` — login `ranking`
 - Admin: http://localhost:8000/admin/ — `ADMIN_USUARIO` / `ADMIN_SENHA`
 
 No computador dá para jogar com as setas do teclado ou A/D.
@@ -87,8 +87,8 @@ No ar em **https://certel-game.onrender.com** (plano grátis):
 | --- | --- | --- |
 | Jogo | https://certel-game.onrender.com/ | `totem1`, `totem2`, `totem3` |
 | Telão do ranking | https://certel-game.onrender.com/ranking/ | `ranking` |
-| Roleta do dia | https://certel-game.onrender.com/roleta/ | `ranking` |
-| Roleta geral | https://certel-game.onrender.com/roleta/?tipo=geral | `ranking` |
+| Sorteio do dia | https://certel-game.onrender.com/roleta/ | `ranking` |
+| Sorteio geral | https://certel-game.onrender.com/roleta/?tipo=geral | `ranking` |
 | Admin | https://certel-game.onrender.com/admin/ | `admin` |
 
 O endereço vem do nome do serviço no `render.yaml` (`certel-game`). O Django
@@ -145,23 +145,36 @@ O perfil `ranking` é o grupo **Ranking** (admin > Grupos). Para dar o mesmo
 acesso a outro usuário, ponha-o nesse grupo. O admin é qualquer usuário com
 "membro da equipe" marcado. As regras ficam em `jogo/perfis.py`.
 
-No telão, mexa o mouse para aparecer o menu (Ranking, Roleta do dia, Roleta
+No telão, mexa o mouse para aparecer o menu (Ranking, Sorteio do dia, Sorteio
 geral, Sair) no canto superior direito; ele some sozinho.
 
-## Roleta
+## Ranking
 
-Duas roletas, as duas operadas pelo login `ranking` (ou pelo admin):
+O telão mostra o **top 5** do ranking geral (os três totens juntos), com a
+melhor partida de cada jogador. O número de posições fica no admin
+("posições no ranking", padrão 5).
 
-- **Roleta do dia** (`/roleta/`): concorre quem jogou no dia escolhido
+## Sorteio
+
+Os nomes passam na vertical numa janela e vão freando até parar no
+vencedor, sob a faixa amarela do meio. O endereço continua `/roleta/` (e a
+API `/api/roleta/`), para não quebrar favoritos do telão.
+
+Dois sorteios, os dois operados pelo login `ranking` (ou pelo admin):
+
+- **Sorteio do dia** (`/roleta/`): concorre quem jogou no dia escolhido
   (padrão: hoje, no fuso de São Paulo). Dá para escolher um dia anterior.
-- **Roleta geral** (`/roleta/?tipo=geral`): concorrem todos os jogadores do
-  evento.
+- **Sorteio geral** (`/roleta/?tipo=geral`): concorrem todos os jogadores do
+  evento. Para sortear só entre os melhores, ponha em admin > Configuração do
+  jogo > "sorteio geral só entre o top" o número de posições (ex.: 5 = só o
+  top 5 do ranking; 0 = todos). A tela mostra "top 5 do ranking" ao lado do
+  total. Quem ganha sai, e a vaga não passa para o 6º.
 
 Regras:
 
 - Conta quem tem partida finalizada e não oculta. Partida ocultada no admin
   tira a pessoa da roleta também.
-- O vencedor é sorteado no servidor; a tela só gira até o nome sorteado.
+- O vencedor é sorteado no servidor; a tela só anima os nomes até o sorteado.
 - Cada giro fica registrado em **Sorteios** no admin, com nome completo,
   telefone, quantos concorreram e quem girou.
 - Quem já ganhou não entra de novo **no mesmo sorteio** (mesmo dia, no
@@ -171,8 +184,23 @@ Regras:
   concorrer), exclua-o em admin > Sorteios.
 - Com "pedir telefone" desligado, cada partida vira um jogador novo; aí quem
   jogou várias vezes tem várias chances.
-- A roda desenha até 36 nomes (uma amostra quando há mais gente); todos os
+- A janela passa até 36 nomes (uma amostra quando há mais gente); todos os
   participantes concorrem, e o total aparece na tela.
+
+## Zerar os dados (antes do evento)
+
+`python manage.py limpar_dados` apaga todos os jogadores, partidas e
+sorteios. Logins, totens e a configuração ficam. Ele mostra o banco e as
+contagens e pede para digitar o nome do banco antes de apagar (`--sim` pula a
+pergunta). Não tem volta.
+
+No Render (plano grátis, sem Shell), rode do seu computador apontando para o
+Postgres: copie a **External Database URL** em Postgres > Connections e, no
+PowerShell:
+
+```powershell
+$env:DATABASE_URL="postgresql://..."; python manage.py limpar_dados
+```
 
 ## Preparar cada totem
 

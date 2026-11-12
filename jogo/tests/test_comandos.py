@@ -1,14 +1,17 @@
-"""Testes do comando ``preparar_ambiente``."""
+"""Testes dos comandos ``preparar_ambiente`` e ``limpar_dados``."""
 
 from io import StringIO
+from unittest import mock
 
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase, override_settings
 
-from jogo import perfis
-from jogo.models import ConfiguracaoJogo, Totem
+from jogo import perfis, services
+from jogo.models import ConfiguracaoJogo, Jogador, Partida, Sorteio, Totem
+
+from .fabricas import criar_partida_finalizada, criar_totem
 
 
 def rodar(**opcoes):
@@ -93,3 +96,30 @@ class PrepararAmbienteTest(TestCase):
         self.assertIn("não criado (defina RANKING_SENHA)", saida)
         self.assertFalse(get_user_model().objects.filter(username="ranking").exists())
         self.assertEqual(Totem.objects.count(), 1)
+
+
+class LimparDadosTest(TestCase):
+    """Comando ``limpar_dados``."""
+
+    def setUp(self):
+        """Um totem com duas partidas e um sorteio feito."""
+        self.totem = criar_totem()
+        criar_partida_finalizada(self.totem, 500)
+        criar_partida_finalizada(self.totem, 900)
+        services.sortear(Sorteio.Tipo.GERAL)
+
+    def test_apaga_jogo_e_mantem_acessos(self):
+        """Com ``--sim`` apaga jogadores, partidas e sorteios; totens e config ficam."""
+        call_command("limpar_dados", sim=True, stdout=StringIO())
+        self.assertFalse(Sorteio.objects.exists())
+        self.assertFalse(Partida.objects.exists())
+        self.assertFalse(Jogador.objects.exists())
+        self.assertTrue(Totem.objects.filter(pk=self.totem.pk).exists())
+        self.assertTrue(ConfiguracaoJogo.objects.exists())
+
+    def test_confirmacao_errada_nao_apaga(self):
+        """Sem ``--sim``, uma resposta diferente do nome do banco cancela tudo."""
+        with mock.patch("builtins.input", return_value="nao"):
+            with self.assertRaises(CommandError):
+                call_command("limpar_dados", stdout=StringIO())
+        self.assertEqual(Partida.objects.count(), 2)

@@ -1,8 +1,8 @@
 {# Menu do telão: aparece ao mexer o mouse e some sozinho (telao.js). #}
 <nav class="telao-nav" id="telao-nav" aria-label="Telas do telão">
   <a href="{% url 'jogo:ranking' %}"{% if request.resolver_match.url_name == 'ranking' %} aria-current="page"{% endif %}>Ranking</a>
-  <a href="{% url 'jogo:roleta' %}"{% if request.resolver_match.url_name == 'roleta' and tipo == 'diario' %} aria-current="page"{% endif %}>Roleta do dia</a>
-  <a href="{% url 'jogo:roleta' %}?tipo=geral"{% if request.resolver_match.url_name == 'roleta' and tipo == 'geral' %} aria-current="page"{% endif %}>Roleta geral</a>
+  <a href="{% url 'jogo:roleta' %}"{% if request.resolver_match.url_name == 'roleta' and tipo == 'diario' %} aria-current="page"{% endif %}>Sorteio do dia</a>
+  <a href="{% url 'jogo:roleta' %}?tipo=geral"{% if request.resolver_match.url_name == 'roleta' and tipo == 'geral' %} aria-current="page"{% endif %}>Sorteio geral</a>
   {% if user.is_staff %}<a href="{% url 'admin:index' %}">Admin</a>{% endif %}
   <form method="post" action="{% url 'jogo:sair' %}">{% csrf_token %}<button type="submit">Sair</button></form>
 </nav>
