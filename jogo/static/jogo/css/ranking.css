@@ -64,6 +64,14 @@ body {
   height: 118%;
   transform: translateX(-52%);
   filter: drop-shadow(0 10px 0 rgba(0, 0, 0, 0.3));
+  animation: mascote-respirar 6s ease-in-out infinite;
+}
+
+/* Movimento leve e contínuo: a imagem nunca fica totalmente parada, o que
+   evita que TVs com proteção de imagem estática escureçam a tela. */
+@keyframes mascote-respirar {
+  0%, 100% { transform: translateX(-52%) translateY(0); }
+  50% { transform: translateX(-52%) translateY(-1.2vh); }
 }
 
 .telao-lista {

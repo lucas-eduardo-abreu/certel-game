@@ -154,6 +154,16 @@ O telão mostra o **top 5** do ranking geral (os três totens juntos), com a
 melhor partida de cada jogador. O top 5 é fixo (telão, pódio e tela de
 resultado do totem); não há mais ajuste no admin.
 
+### TV sempre acesa
+
+As telas de ranking e sorteio pedem ao navegador para a tela não apagar
+(Screen Wake Lock e, em navegador de TV sem essa função, um vídeo mudo de 1
+pixel tocando) e o mascote se move devagar, para a imagem nunca ficar
+parada. Isso não desliga a economia de energia **do aparelho**: na TV,
+desligue também o modo econômico, o desligamento automático por falta de
+uso e a proteção de tela (os nomes mudam por marca, em geral em
+Configurações > Geral/Energia).
+
 ## Sorteio
 
 Os nomes passam na vertical numa janela e vão freando até parar no
