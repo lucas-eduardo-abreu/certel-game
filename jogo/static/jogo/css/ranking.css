@@ -6,8 +6,10 @@ body {
   overflow: hidden;
 }
 
+/* Altura da área visível (100% do html/body), e não 100vh: em navegador de
+   TV o 100vh conta a barra do próprio navegador e cortava a 5ª linha. */
 .telao {
-  height: 100vh;
+  height: 100%;
   display: grid;
   grid-template-columns: 36fr 64fr;
 }
@@ -78,10 +80,11 @@ body {
   -webkit-text-stroke-width: min(1.3vh, 12px);
 }
 
-/* Top 5: cinco linhas grandes dividindo a altura. */
+/* Top 5: sempre cinco linhas dividindo a altura que sobrar, para a última
+   nunca ficar fora da tela. */
 .telao-lista ol {
   display: grid;
-  grid-auto-rows: 1fr;
+  grid-template-rows: repeat(5, minmax(0, 1fr));
   gap: 2vh;
   margin: 0;
   padding: 0;
@@ -310,6 +313,7 @@ body {
   .telao-lista h2 { font-size: 32px; -webkit-text-stroke-width: 8px; }
 
   .telao-lista ol {
+    grid-template-rows: none;
     grid-auto-rows: auto;
     gap: 8px;
   }
