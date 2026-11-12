@@ -151,8 +151,8 @@ geral, Sair) no canto superior direito; ele some sozinho.
 ## Ranking
 
 O telão mostra o **top 5** do ranking geral (os três totens juntos), com a
-melhor partida de cada jogador. O número de posições fica no admin
-("posições no ranking", padrão 5).
+melhor partida de cada jogador. O top 5 é fixo (telão, pódio e tela de
+resultado do totem); não há mais ajuste no admin.
 
 ## Sorteio
 
@@ -164,6 +164,9 @@ Dois sorteios, os dois operados pelo login `ranking` (ou pelo admin):
 
 - **Sorteio do dia** (`/roleta/`): concorre quem jogou no dia escolhido
   (padrão: hoje, no fuso de São Paulo). Dá para escolher um dia anterior.
+  Sai **um sorteio por dia**: depois dele o botão vira "Sorteio do dia já
+  feito" e a API recusa outro giro naquele dia. Para refazer, exclua o
+  sorteio no admin.
 - **Sorteio geral** (`/roleta/?tipo=geral`): concorrem todos os jogadores do
   evento. Para sortear só entre os melhores, ponha em admin > Configuração do
   jogo > "sorteio geral só entre o top" o número de posições (ex.: 5 = só o
@@ -178,7 +181,8 @@ Regras:
 - Cada giro fica registrado em **Sorteios** no admin, com nome completo,
   telefone, quantos concorreram e quem girou.
 - Quem já ganhou não entra de novo **no mesmo sorteio** (mesmo dia, no
-  diário; ou o geral). Girar de novo sorteia o próximo prêmio. Quem ganhou no
+  diário; ou o geral). No geral, girar de novo sorteia o próximo prêmio (o
+  do dia é um só por dia). Quem ganhou no
   dia continua concorrendo na roleta geral.
 - Para refazer um sorteio (ex.: ganhador não apareceu e deve voltar a
   concorrer), exclua-o em admin > Sorteios.
@@ -237,7 +241,7 @@ Em **Configuração do jogo**: título, duração da partida, pontos por ícone,
 pontos perdidos por obstáculo, ícones seguidos por multiplicador (0 desliga),
 pontos para dobrar a velocidade e limite de dobras, proporção de obstáculos
 (inicial e aumento), efeitos sonoros e música,
-pedir ou não telefone, texto do consentimento, tamanho do ranking e som. Os totens pegam a mudança ao voltar para a tela de
+pedir ou não telefone, texto do consentimento e som. Os totens pegam a mudança ao voltar para a tela de
 espera, sem recarregar.
 
 Em **Partidas**: a ação "Ocultar do ranking" tira uma partida do ranking

@@ -22,7 +22,6 @@ class ConfiguracaoSerializer(serializers.ModelSerializer):
             "perigos_aumento",
             "pedir_telefone",
             "texto_consentimento",
-            "tamanho_ranking",
             "som_ativo",
             "musica_ativa",
         ]

@@ -51,7 +51,7 @@
   window.CertelAPI = {
     config: function () { return resolver(config); },
     ranking: function () {
-      return resolver({ titulo: config.titulo, ranking: classificar().slice(0, config.tamanho_ranking) });
+      return resolver({ titulo: config.titulo, ranking: classificar().slice(0, 5) });
     },
     iniciar: function (dados) {
       var id = 'p' + Date.now();
@@ -79,7 +79,7 @@
         melhor_pontuacao: meu.pontuacao,
         posicao: meu.posicao,
         jogador_id: partida.chave,
-        ranking: ranking.slice(0, config.tamanho_ranking)
+        ranking: ranking.slice(0, 5)
       });
     }
   };

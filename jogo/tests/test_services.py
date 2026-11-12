@@ -190,14 +190,11 @@ class RankingTest(TestCase):
         self.assertEqual(services.posicao_do_jogador(self.ana), (None, 0))
 
     def test_limite(self):
-        """O limite explícito e o da configuração são respeitados."""
-        for indice in range(5):
+        """O limite explícito é respeitado e o padrão é o top 5."""
+        for indice in range(8):
             criar_partida_finalizada(self.totem1, 100 * indice, minutos_atras=indice)
         self.assertEqual(len(services.montar_ranking(limite=2)), 2)
-        configuracao = ConfiguracaoJogo.carregar()
-        configuracao.tamanho_ranking = 3
-        configuracao.save()
-        self.assertEqual(len(services.montar_ranking()), 3)
+        self.assertEqual(len(services.montar_ranking()), 5)
 
     def test_posicao_usa_o_recorde(self):
         """A posição considera a melhor partida, não a última."""

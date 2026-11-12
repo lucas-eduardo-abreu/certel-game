@@ -169,7 +169,6 @@ class ConfiguracaoJogo(AbstractBaseModel):
         perigos_aumento: Quanto essa proporção sobe a cada marca de pontos.
         pedir_telefone: Se o totem pede telefone e consentimento.
         texto_consentimento: Texto do consentimento exibido no cadastro.
-        tamanho_ranking: Quantas posições o ranking mostra.
         sorteio_geral_top: Se maior que zero, só o top N do ranking concorre
             no sorteio geral.
         som_ativo: Liga ou desliga os efeitos sonoros dos totens.
@@ -242,11 +241,6 @@ class ConfiguracaoJogo(AbstractBaseModel):
     )
     texto_consentimento = models.TextField(
         "texto do consentimento", default=CONSENTIMENTO_PADRAO, max_length=300
-    )
-    tamanho_ranking = models.PositiveSmallIntegerField(
-        "posições no ranking",
-        default=5,
-        validators=[MinValueValidator(3), MaxValueValidator(50)],
     )
     sorteio_geral_top = models.PositiveSmallIntegerField(
         "sorteio geral só entre o top",

@@ -183,9 +183,10 @@ class RankingApiTest(TestCase):
         self.assertEqual(dados["titulo"], "Corrida Certel")
         self.assertEqual([r["pontuacao"] for r in dados["ranking"]], [400, 300, 200, 100])
 
-    def test_limite(self):
-        """O parâmetro ``limite`` reduz a lista; valor inválido cai no padrão."""
+    def test_sempre_top_5(self):
+        """O ranking mostra no máximo 5, mesmo pedindo mais."""
+        for indice in range(4):
+            criar_partida_finalizada(self.totem, 1000 + indice, minutos_atras=indice)
         url = reverse("jogo:api-ranking")
-        self.assertEqual(len(self.client.get(url, {"limite": 2}).json()["ranking"]), 2)
-        self.assertEqual(len(self.client.get(url, {"limite": "abc"}).json()["ranking"]), 4)
-        self.assertEqual(len(self.client.get(url, {"limite": 0}).json()["ranking"]), 1)
+        self.assertEqual(len(self.client.get(url).json()["ranking"]), 5)
+        self.assertEqual(len(self.client.get(url, {"limite": 50}).json()["ranking"]), 5)

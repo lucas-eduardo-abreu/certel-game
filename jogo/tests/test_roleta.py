@@ -76,14 +76,24 @@ class SorteioServiceTest(TestCase):
         self.assertEqual(self.participantes(Sorteio.Tipo.DIARIO, self.hoje), {self.bia})
         self.assertIn(self.ana, self.participantes(Sorteio.Tipo.GERAL))
 
-    def test_sorteia_ate_acabar(self):
-        """Dois giros sorteiam as duas pessoas; o terceiro avisa que acabou."""
-        vencedores = {
-            services.sortear(Sorteio.Tipo.DIARIO, self.hoje).vencedor for _ in range(2)
-        }
-        self.assertEqual(vencedores, {self.ana, self.bia})
-        with self.assertRaisesMessage(services.SorteioInvalido, "Não há ninguém"):
+    def test_diario_um_por_dia(self):
+        """O sorteio do dia sai uma vez só por dia; outro dia segue liberado."""
+        self.assertFalse(services.sorteio_encerrado(Sorteio.Tipo.DIARIO, self.hoje))
+        services.sortear(Sorteio.Tipo.DIARIO, self.hoje)
+        self.assertTrue(services.sorteio_encerrado(Sorteio.Tipo.DIARIO, self.hoje))
+        with self.assertRaisesMessage(services.SorteioInvalido, "já foi feito"):
             services.sortear(Sorteio.Tipo.DIARIO, self.hoje)
+        self.assertEqual(Sorteio.objects.filter(dia=self.hoje).count(), 1)
+        self.assertFalse(services.sorteio_encerrado(Sorteio.Tipo.DIARIO, self.ontem))
+        self.assertEqual(services.sortear(Sorteio.Tipo.DIARIO, self.ontem).vencedor, self.caio)
+
+    def test_geral_sem_limite_ate_acabar(self):
+        """O geral sorteia várias vezes; quando não sobra ninguém, avisa."""
+        vencedores = {services.sortear(Sorteio.Tipo.GERAL).vencedor for _ in range(3)}
+        self.assertEqual(vencedores, {self.ana, self.bia, self.caio})
+        self.assertFalse(services.sorteio_encerrado(Sorteio.Tipo.GERAL))
+        with self.assertRaisesMessage(services.SorteioInvalido, "Não há ninguém"):
+            services.sortear(Sorteio.Tipo.GERAL)
 
     def test_geral_ignora_o_dia(self):
         """No geral o dia não é gravado."""
@@ -190,6 +200,17 @@ class RoletaApiTest(TestCase):
         geral = self.client.get(self.url, {"tipo": "geral"}).json()
         self.assertIsNone(geral["dia"])
         self.assertEqual(geral["total"], 3)
+
+    def test_diario_trava_depois_do_primeiro(self):
+        """Depois do sorteio do dia, a API avisa ``encerrado`` e recusa outro giro."""
+        self.assertFalse(self.client.get(self.url, {"tipo": "diario"}).json()["encerrado"])
+        self.assertEqual(self.girar(tipo="diario").status_code, 201)
+        self.assertTrue(self.client.get(self.url, {"tipo": "diario"}).json()["encerrado"])
+        resposta = self.girar(tipo="diario")
+        self.assertEqual(resposta.status_code, 400)
+        self.assertEqual(resposta.json()["erro"], "O sorteio deste dia já foi feito.")
+        self.assertFalse(self.client.get(self.url, {"tipo": "geral"}).json()["encerrado"])
+        self.assertEqual(self.girar(tipo="geral").status_code, 201)
 
     def test_dia_sem_jogadores(self):
         """Dia sem partidas responde 400 com a explicação."""

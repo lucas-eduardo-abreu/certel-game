@@ -130,7 +130,8 @@
 }
 
 /* Janela do sorteio: 7 nomes visíveis, o do meio fica sob a mira amarela.
-   A faixa tem 8 linhas (uma a mais para o nome que está entrando). */
+   A faixa tem 8 linhas (uma a mais para o nome que está entrando) e passa
+   por cima da mira, para o nome do meio ficar preto e nítido. */
 .sorteio-janela {
   position: relative;
   width: min(110vh, 56vw);
@@ -151,6 +152,7 @@
   margin: 0;
   padding: 0;
   list-style: none;
+  z-index: 1;
   will-change: transform;
   -webkit-mask-image: linear-gradient(transparent 0, #000 22%, #000 66%, transparent 88%);
   mask-image: linear-gradient(transparent 0, #000 22%, #000 66%, transparent 88%);
@@ -187,7 +189,7 @@
   height: calc(100% / 7);
   border: 0.7vh solid var(--preto);
   border-radius: 999px;
-  background: rgba(255, 194, 14, 0.35);
+  background: var(--pele);
   pointer-events: none;
 }
 
@@ -219,7 +221,7 @@
 }
 
 @keyframes sorteio-piscar {
-  50% { background: rgba(255, 194, 14, 0.35); }
+  50% { background: var(--pele); }
 }
 
 .roleta-girar {
@@ -267,8 +269,7 @@
   font-size: 8vh;
   font-weight: 800;
   line-height: 1;
-  -webkit-text-stroke: 1vh var(--preto);
-  paint-order: stroke fill;
+  -webkit-text-stroke-width: 1vh;
 }
 
 .roleta-resultado-info {

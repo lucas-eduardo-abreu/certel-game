@@ -24,6 +24,12 @@ FOLGA_ITENS = 2
 # Folga, em segundos, entre o cronômetro do totem e o relógio do servidor.
 TOLERANCIA_SEGUNDOS = 3
 
+# O ranking (telão e totens) mostra sempre o top 5.
+TAMANHO_RANKING = 5
+
+# Quantos sorteios o sorteio do dia permite em cada dia.
+SORTEIOS_POR_DIA = 1
+
 
 class PartidaInvalida(Exception):
     """Erro de regra de negócio ao iniciar ou finalizar uma partida."""
@@ -194,18 +200,16 @@ def _melhores_partidas():
     )
 
 
-def montar_ranking(limite=None):
+def montar_ranking(limite=TAMANHO_RANKING):
     """Monta o ranking geral, somando os três totens.
 
     Args:
-        limite: Quantidade de posições; por padrão usa a configuração.
+        limite: Quantidade de posições; por padrão, o top 5.
 
     Returns:
         list[dict]: Itens com ``posicao``, ``nome``, ``pontuacao``, ``totem``
         e ``jogador_id``.
     """
-    if limite is None:
-        limite = ConfiguracaoJogo.carregar().tamanho_ranking
     partidas = _melhores_partidas().select_related("jogador", "totem")[:limite]
     return [
         {
@@ -304,6 +308,25 @@ def sorteios_realizados(tipo, dia=None):
     )
 
 
+def sorteio_encerrado(tipo, dia=None):
+    """Diz se o escopo já não aceita mais sorteios.
+
+    O sorteio do dia vale ``SORTEIOS_POR_DIA`` vez(es) por dia; o geral não
+    tem limite.
+
+    Args:
+        tipo: Tipo da roleta.
+        dia: Dia, no sorteio diário.
+
+    Returns:
+        bool: ``True`` se o limite do dia já foi atingido.
+    """
+    dia = _escopo_do_sorteio(tipo, dia)
+    if dia is None:
+        return False
+    return Sorteio.objects.filter(tipo=tipo, dia=dia).count() >= SORTEIOS_POR_DIA
+
+
 def participantes_do_sorteio(tipo, dia=None):
     """Jogadores que concorrem na roleta.
 
@@ -348,11 +371,15 @@ def sortear(tipo, dia=None, usuario=None):
         Sorteio: O sorteio registrado.
 
     Raises:
-        SorteioInvalido: Se não houver ninguém para sortear.
+        SorteioInvalido: Se o sorteio do dia já foi feito ou se não houver
+            ninguém para sortear.
     """
     dia = _escopo_do_sorteio(tipo, dia)
-    # Trava a configuração para dois giros ao mesmo tempo não sortearem a mesma pessoa.
+    # Trava a configuração para dois giros ao mesmo tempo não sortearem a
+    # mesma pessoa nem passarem do limite do dia.
     ConfiguracaoJogo.objects.select_for_update().get(pk=ConfiguracaoJogo.carregar().pk)
+    if sorteio_encerrado(tipo, dia):
+        raise SorteioInvalido("O sorteio deste dia já foi feito.")
     candidatos = list(participantes_do_sorteio(tipo, dia).values_list("pk", flat=True))
     if not candidatos:
         raise SorteioInvalido("Não há ninguém para sortear.")

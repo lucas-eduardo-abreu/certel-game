@@ -152,20 +152,13 @@ class RankingView(APIView):
     permission_classes = [PodeVerRanking]
 
     def get(self, request):
-        """Retorna o ranking geral e o título do jogo.
+        """Retorna o ranking geral (sempre o top 5) e o título do jogo.
 
         Returns:
             Response: ``titulo`` e a lista ``ranking``.
         """
         configuracao = ConfiguracaoJogo.carregar()
-        try:
-            limite = int(request.query_params.get("limite", configuracao.tamanho_ranking))
-        except ValueError:
-            limite = configuracao.tamanho_ranking
-        limite = max(1, min(limite, 50))
-        return Response(
-            {"titulo": configuracao.titulo, "ranking": services.montar_ranking(limite)}
-        )
+        return Response({"titulo": configuracao.titulo, "ranking": services.montar_ranking()})
 
 
 def _sorteio_json(sorteio):
@@ -214,8 +207,8 @@ class RoletaView(APIView):
 
         Returns:
             Response: ``total`` de participantes, uma amostra de ``nomes``
-            para desenhar a roleta, os ``sorteios`` já feitos e os ``dias``
-            com partidas.
+            para desenhar a roleta, se o sorteio está ``encerrado`` (limite
+            do dia), os ``sorteios`` já feitos e os ``dias`` com partidas.
         """
         escopo = self._escopo(request.query_params)
         if escopo is None:
@@ -236,6 +229,8 @@ class RoletaView(APIView):
                     else 0
                 ),
                 "nomes": nomes,
+                # Sorteio do dia: só um por dia; depois disso o botão trava.
+                "encerrado": services.sorteio_encerrado(tipo, dia),
                 "sorteios": [_sorteio_json(s) for s in services.sorteios_realizados(tipo, dia)],
             }
         )

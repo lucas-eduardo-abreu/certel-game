@@ -1,8 +1,8 @@
 /* Sorteio do telão: os nomes passam na vertical e param no vencedor.
    O vencedor é sorteado no servidor (POST /api/roleta/); a tela só anima a
    faixa até o nome que veio na resposta. Tipos: "diario" (quem jogou no dia
-   escolhido) e "geral" (todos). Quem já foi sorteado não entra de novo no
-   mesmo sorteio. */
+   escolhido; um sorteio por dia) e "geral" (todos). Quem já foi sorteado não
+   entra de novo no mesmo sorteio. */
 (function () {
   'use strict';
 
@@ -23,7 +23,9 @@
   var estado = {
     tipo: dados.tipo,
     dia: null, // sem dia, o servidor usa hoje (fuso do evento)
-    nomes: [],
+    nomes: [],      // participantes (amostra vinda do servidor)
+    faixa: [],      // o que passa na janela: os nomes e, se forem poucos, linhas vazias
+    encerrado: false,
     pos: 0,    // qual nome está no topo da janela (a fração é quanto já subiu)
     girando: false
   };
@@ -76,7 +78,7 @@
 
   function desenhar() {
     var linhas = faixa.children;
-    var nomes = estado.nomes;
+    var nomes = estado.faixa;
     var base = Math.floor(estado.pos);
     var fracao = estado.pos - base;
     var noMeio = CENTRO + (fracao >= 0.5 ? 1 : 0);
@@ -91,9 +93,21 @@
     faixa.style.transform = 'translateY(' + (-fracao * 100 / (LINHAS + 1)) + '%)';
   }
 
+  /* Com poucos nomes, completa a volta com linhas vazias para o mesmo nome
+     nunca aparecer duas vezes na janela ao mesmo tempo. */
+  function montarFaixa() {
+    var lista = estado.nomes.slice();
+    if (lista.length) {
+      while (lista.length < LINHAS + 1) { lista.push(''); }
+    }
+    estado.faixa = lista;
+  }
+
   function montarNomes(nomes) {
     estado.nomes = nomes.slice();
-    estado.pos = estado.nomes.length ? modulo(Math.round(estado.pos), estado.nomes.length) : 0;
+    montarFaixa();
+    // Em repouso, o primeiro nome fica sob a mira.
+    estado.pos = estado.faixa.length ? modulo(-CENTRO, estado.faixa.length) : 0;
     desenhar();
   }
 
@@ -145,7 +159,10 @@
     $('#roleta-total').textContent = texto;
     desenharGanhadores(corpo.sorteios);
     montarNomes(corpo.nomes);
-    $('#roleta-girar').disabled = !total;
+    estado.encerrado = Boolean(corpo.encerrado);
+    var botao = $('#roleta-girar');
+    botao.textContent = estado.encerrado ? 'Sorteio do dia já feito' : 'Sortear';
+    botao.disabled = !total || estado.encerrado;
   }
 
   /* Não redesenha durante o sorteio nem com o vencedor na tela (a faixa fica parada nele). */
@@ -179,7 +196,7 @@
   /* Posição final (inteira) que deixa o nome `indice` sob a mira. */
   function posicaoAlvo(indice) {
     var alvo = Math.ceil(estado.pos + LINHAS_FREANDO);
-    return alvo + modulo(indice - CENTRO - alvo, estado.nomes.length);
+    return alvo + modulo(indice - CENTRO - alvo, estado.faixa.length);
   }
 
   /* Freia da velocidade atual até `alvo` com ease-out cúbico (a derivada inicial casa com o giro livre). */
@@ -200,10 +217,13 @@
   /* Garante o vencedor na faixa (a lista é uma amostra) e devolve a posição dele. */
   function indiceDoVencedor(nome) {
     var indices = [];
-    estado.nomes.forEach(function (n, i) { if (n === nome) { indices.push(i); } });
+    estado.faixa.forEach(function (n, i) { if (n === nome) { indices.push(i); } });
     if (indices.length) { return indices[Math.floor(Math.random() * indices.length)]; }
-    var indice = Math.floor(Math.random() * estado.nomes.length);
-    estado.nomes[indice] = nome;
+    // Fora da amostra: entra no lugar de outro nome (nunca numa linha vazia).
+    var cheios = [];
+    estado.faixa.forEach(function (n, i) { if (n) { cheios.push(i); } });
+    var indice = cheios[Math.floor(Math.random() * cheios.length)];
+    estado.faixa[indice] = nome;
     return indice;
   }
 
@@ -225,7 +245,7 @@
   }
 
   function sortear() {
-    if (estado.girando || !estado.nomes.length) { return; }
+    if (estado.girando || !estado.nomes.length || estado.encerrado) { return; }
     estado.girando = true;
     $('#roleta-girar').disabled = true;
     $('#roleta-erro').textContent = '';
@@ -260,7 +280,7 @@
       .then(function () {
         janela.classList.remove('rapido');
         estado.girando = false;
-        $('#roleta-girar').disabled = false;
+        $('#roleta-girar').disabled = estado.encerrado;
         return atualizar();
       });
   }

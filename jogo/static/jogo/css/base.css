@@ -155,16 +155,37 @@ button {
   pointer-events: none;
 }
 
-/* Título com o traço do mascote. */
+/* Título com o traço do mascote.
+   O contorno preto fica numa cópia do texto atrás do título (::before, com o
+   texto vindo de data-texto, preenchido por js/traco.js), e não com
+   "paint-order: stroke fill". Navegadores de TV não aplicam paint-order em
+   texto HTML: o contorno era desenhado por cima e comia as letras.
+   A largura do contorno continua em -webkit-text-stroke-width (as telas
+   ajustam por elemento); no título ela fica transparente e a cópia herda. */
 .titulo-traco {
+  position: relative;
+  isolation: isolate;
   margin: 0;
   color: var(--branco);
   font-weight: 800;
   line-height: 0.92;
   letter-spacing: -0.01em;
-  -webkit-text-stroke: 12px var(--preto);
-  paint-order: stroke fill;
+  -webkit-text-stroke-width: 12px;
+  -webkit-text-stroke-color: transparent;
+}
+
+.titulo-traco::before {
+  content: attr(data-texto);
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: -1;
+  width: 100%;
+  color: var(--preto);
+  -webkit-text-stroke-width: inherit;
+  -webkit-text-stroke-color: var(--preto);
   text-shadow: 0 8px 0 var(--preto);
+  pointer-events: none;
 }
 
 .adesivo {
