@@ -102,7 +102,8 @@ STORAGES = {
         "BACKEND": (
             "django.contrib.staticfiles.storage.StaticFilesStorage"
             if DEBUG or TESTANDO
-            else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+            # Não quebra o admin em caminho fora do manifesto (core/storage.py).
+            else "core.storage.EstaticosComprimidos"
         )
     },
 }
