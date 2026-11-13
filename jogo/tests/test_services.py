@@ -1,6 +1,9 @@
 """Testes das regras de negócio."""
 
+from datetime import timedelta
+
 from django.test import TestCase
+from django.utils import timezone
 from model_bakery import baker
 
 from jogo import services
@@ -157,7 +160,7 @@ class FinalizarPartidaTest(TestCase):
 
 
 class RankingTest(TestCase):
-    """Ranking geral e posição do jogador."""
+    """Ranking do dia e posição do jogador."""
 
     def setUp(self):
         """Cria dois totens e três jogadores."""
@@ -166,6 +169,25 @@ class RankingTest(TestCase):
         self.ana = baker.make(Jogador, nome="Ana Souza")
         self.bia = baker.make(Jogador, nome="Bia")
         self.caio = baker.make(Jogador, nome="Caio Lima")
+
+    def test_zera_a_cada_dia(self):
+        """Partida de ontem fica salva, mas só conta no ranking de ontem."""
+        ontem = criar_partida_finalizada(self.totem1, 9000, self.ana)
+        Partida.objects.filter(pk=ontem.pk).update(
+            finalizada_em=timezone.now() - timedelta(days=1)
+        )
+        criar_partida_finalizada(self.totem1, 100, self.ana)
+        criar_partida_finalizada(self.totem2, 500, self.bia)
+
+        hoje = services.montar_ranking()
+        self.assertEqual([(r["nome"], r["pontuacao"]) for r in hoje], [("Bia", 500), ("Ana S.", 100)])
+        self.assertEqual(services.posicao_do_jogador(self.ana), (2, 100))
+
+        dia_anterior = timezone.localdate() - timedelta(days=1)
+        self.assertEqual(
+            [r["pontuacao"] for r in services.montar_ranking(dia=dia_anterior)], [9000]
+        )
+        self.assertTrue(Partida.objects.filter(pk=ontem.pk).exists())
 
     def test_melhor_partida_de_cada_jogador(self):
         """Cada jogador aparece uma vez, com a melhor pontuação, somando os totens."""

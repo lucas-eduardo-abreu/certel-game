@@ -247,8 +247,9 @@ class ConfiguracaoJogo(AbstractBaseModel):
         default=0,
         validators=[MaxValueValidator(50)],
         help_text=(
-            "0: todos que jogaram concorrem no sorteio geral. 5: só o top 5 do "
-            "ranking geral concorre. Não muda o sorteio do dia."
+            "0: todos que jogaram concorrem no sorteio geral. 5: só as 5 "
+            "melhores pontuações somando todos os dias do evento (cada um com "
+            "o seu recorde). Não muda o sorteio do dia."
         ),
     )
     som_ativo = models.BooleanField("efeitos sonoros ligados", default=True)

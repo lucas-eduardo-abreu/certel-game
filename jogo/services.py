@@ -24,7 +24,7 @@ FOLGA_ITENS = 2
 # Folga, em segundos, entre o cronômetro do totem e o relógio do servidor.
 TOLERANCIA_SEGUNDOS = 3
 
-# O ranking (telão e totens) mostra sempre o top 5.
+# O ranking (telão e totens) mostra sempre o top 5 do dia.
 TAMANHO_RANKING = 5
 
 # Quantos sorteios o sorteio do dia permite em cada dia.
@@ -198,14 +198,20 @@ def finalizar_partida(partida, pontuacao, itens_coletados=0, perigos_atingidos=0
     return partida
 
 
-def _melhores_partidas():
+def _melhores_partidas(dia=None):
     """Monta o queryset com a melhor partida de cada jogador.
+
+    Args:
+        dia: Só partidas finalizadas neste dia (fuso do evento); ``None``
+            considera todos os dias.
 
     Returns:
         QuerySet: Partidas finalizadas e visíveis, uma por jogador,
         ordenadas da maior pontuação para a menor (empate: quem fez antes).
     """
     visiveis = _partidas_validas()
+    if dia is not None:
+        visiveis = visiveis.filter(finalizada_em__date=dia)
     melhor_do_jogador = (
         visiveis.filter(jogador=OuterRef("jogador"))
         .order_by("-pontuacao", "finalizada_em", "pk")
@@ -216,17 +222,22 @@ def _melhores_partidas():
     )
 
 
-def montar_ranking(limite=TAMANHO_RANKING):
-    """Monta o ranking geral, somando os três totens.
+def montar_ranking(limite=TAMANHO_RANKING, dia=None):
+    """Monta o ranking do dia, somando os três totens.
+
+    O ranking zera à meia-noite (fuso do evento): só contam as partidas
+    finalizadas no dia. As dos dias anteriores continuam salvas no banco.
 
     Args:
         limite: Quantidade de posições; por padrão, o top 5.
+        dia: Dia do ranking; por padrão, hoje.
 
     Returns:
         list[dict]: Itens com ``posicao``, ``nome``, ``pontuacao``, ``totem``
         e ``jogador_id``.
     """
-    partidas = _melhores_partidas().select_related("jogador", "totem")[:limite]
+    dia = dia or timezone.localdate()
+    partidas = _melhores_partidas(dia).select_related("jogador", "totem")[:limite]
     return [
         {
             "posicao": posicao,
@@ -239,17 +250,18 @@ def montar_ranking(limite=TAMANHO_RANKING):
     ]
 
 
-def posicao_do_jogador(jogador):
-    """Calcula a posição do jogador no ranking geral.
+def posicao_do_jogador(jogador, dia=None):
+    """Calcula a posição do jogador no ranking do dia.
 
     Args:
         jogador: Jogador a localizar.
+        dia: Dia do ranking; por padrão, hoje.
 
     Returns:
-        tuple[int | None, int]: Posição (ou ``None`` se não estiver no
-        ranking) e a melhor pontuação do jogador.
+        tuple[int | None, int]: Posição (ou ``None`` se não jogou no dia) e
+        a melhor pontuação do jogador no dia.
     """
-    melhores = _melhores_partidas()
+    melhores = _melhores_partidas(dia or timezone.localdate())
     melhor = melhores.filter(jogador=jogador).first()
     if melhor is None:
         return None, 0

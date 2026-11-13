@@ -123,7 +123,7 @@ class FinalizarPartidaView(APIView):
             pk: UUID da partida.
 
         Returns:
-            Response: Pontuação, posição no ranking geral e o ranking.
+            Response: Pontuação, posição no ranking do dia e o ranking.
         """
         partida = get_object_or_404(Partida, pk=pk, totem=request.user.totem)
         serializer = FinalizarPartidaSerializer(data=request.data)
@@ -147,12 +147,12 @@ class FinalizarPartidaView(APIView):
 
 
 class RankingView(APIView):
-    """Ranking geral, para os totens e o telão."""
+    """Ranking do dia (zera à meia-noite), para os totens e o telão."""
 
     permission_classes = [PodeVerRanking]
 
     def get(self, request):
-        """Retorna o ranking geral (sempre o top 5) e o título do jogo.
+        """Retorna o ranking do dia (sempre o top 5) e o título do jogo.
 
         Returns:
             Response: ``titulo`` e a lista ``ranking``.

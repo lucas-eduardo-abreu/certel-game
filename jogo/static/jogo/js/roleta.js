@@ -155,7 +155,7 @@
     var texto = total === 1
       ? '1 pessoa concorrendo'
       : total.toLocaleString('pt-BR') + ' pessoas concorrendo';
-    if (corpo.somente_top) { texto += ' · top ' + corpo.somente_top + ' do ranking'; }
+    if (corpo.somente_top) { texto += ' · top ' + corpo.somente_top + ' do evento'; }
     $('#roleta-total').textContent = texto;
     desenharGanhadores(corpo.sorteios);
     montarNomes(corpo.nomes);

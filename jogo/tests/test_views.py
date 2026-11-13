@@ -100,7 +100,7 @@ class PerfisTest(TestCase):
         """O usuário do ranking abre o telão e as duas roletas."""
         self.client.force_login(criar_usuario_ranking())
         resposta = self.client.get(reverse("jogo:ranking"))
-        self.assertContains(resposta, "Ranking geral")
+        self.assertContains(resposta, "Ranking do dia")
         self.assertContains(resposta, "jogo/js/ranking.js")
         self.assertNotContains(resposta, reverse("admin:index"))
         url = reverse("jogo:roleta")

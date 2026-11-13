@@ -432,9 +432,9 @@
     } else if (resposta.erro) {
       frase = 'Não foi possível registrar a pontuação: ' + resposta.erro;
     } else if (resposta.posicao) {
-      frase = 'Você está em ' + resposta.posicao + 'º lugar no ranking geral';
+      frase = 'Você está em ' + resposta.posicao + 'º lugar no ranking de hoje';
       if (resposta.melhor_pontuacao > resultado.pontos) {
-        frase += '. Seu recorde é ' + milhar(resposta.melhor_pontuacao) + ' pontos';
+        frase += '. Seu recorde de hoje é ' + milhar(resposta.melhor_pontuacao) + ' pontos';
       }
       frase += '.';
     } else {

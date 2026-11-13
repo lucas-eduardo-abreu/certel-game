@@ -89,7 +89,7 @@ class TotemView(PerfilMixin, TemplateView):
 
 
 class RankingView(PerfilMixin, TemplateView):
-    """Telão do ranking geral, para rodar em uma tela separada."""
+    """Telão do ranking do dia, para rodar em uma tela separada."""
 
     template_name = "jogo/ranking.html"
 

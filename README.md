@@ -2,7 +2,8 @@
 
 Jogo para totens: o mascote da Certel corre por uma rua, pega os ícones da
 cooperativa (+100) e desvia dos obstáculos (−300). Cada totem tem seu login e
-todas as pontuações entram em um ranking geral.
+todas as pontuações entram num ranking único dos totens, que zera todo dia à
+meia-noite.
 
 ## Pontuação
 
@@ -150,9 +151,12 @@ geral, Sair) no canto superior direito; ele some sozinho.
 
 ## Ranking
 
-O telão mostra o **top 5** do ranking geral (os três totens juntos), com a
-melhor partida de cada jogador. O top 5 é fixo (telão, pódio e tela de
-resultado do totem); não há mais ajuste no admin.
+O ranking é **do dia**: à meia-noite (horário de São Paulo) ele começa
+zerado, e só contam as partidas daquele dia. Nada é apagado: as partidas dos
+dias anteriores continuam no banco (admin > Partidas, exportação). O telão
+mostra o **top 5** do dia (os três totens juntos), com a melhor partida de
+cada jogador no dia. O top 5 é fixo (telão, pódio e tela de resultado do
+totem); não há ajuste no admin.
 
 ### TV sempre acesa
 
@@ -179,9 +183,10 @@ Dois sorteios, os dois operados pelo login `ranking` (ou pelo admin):
   sorteio no admin.
 - **Sorteio geral** (`/roleta/?tipo=geral`): concorrem todos os jogadores do
   evento. Para sortear só entre os melhores, ponha em admin > Configuração do
-  jogo > "sorteio geral só entre o top" o número de posições (ex.: 5 = só o
-  top 5 do ranking; 0 = todos). A tela mostra "top 5 do ranking" ao lado do
-  total. Quem ganha sai, e a vaga não passa para o 6º.
+  jogo > "sorteio geral só entre o top" o número de posições (ex.: 5 = só as
+  5 melhores pontuações somando todos os dias do evento, cada jogador com o
+  seu recorde; 0 = todos). A tela mostra "top 5 do evento" ao lado do total.
+  Quem ganha sai, e a vaga não passa para o 6º.
 
 Regras:
 
@@ -262,7 +267,8 @@ contatos.
 
 ## Como o ranking funciona
 
-- Soma os três totens. Cada jogador aparece uma vez, com a melhor pontuação.
+- Vale só o dia de hoje; zera à meia-noite (as partidas antigas ficam salvas).
+- Soma os três totens. Cada jogador aparece uma vez, com a melhor pontuação do dia.
 - Com telefone ligado, o telefone identifica o jogador entre partidas. Sem
   telefone, cada partida é uma entrada.
 - Empate: fica à frente quem marcou primeiro.

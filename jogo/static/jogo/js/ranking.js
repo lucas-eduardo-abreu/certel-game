@@ -1,4 +1,4 @@
-/* Telão do ranking: busca o ranking geral a cada 5 s e destaca o que mudou. */
+/* Telão do ranking: busca o ranking do dia a cada 5 s (zera à meia-noite) e destaca o que mudou. */
 (function () {
   'use strict';
 

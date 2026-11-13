@@ -31,7 +31,7 @@
     </div>
     <img class="atracao-mascote" src="{% static 'jogo/img/mascote.png' %}" alt="Mascote da Certel">
     <button class="botao atracao-botao" type="button" id="botao-jogar">Toque para jogar</button>
-    <ol class="podio" id="podio" aria-label="Primeiros do ranking geral"></ol>
+    <ol class="podio" id="podio" aria-label="Primeiros do ranking do dia"></ol>
     <div class="canto-operador" id="canto-operador"></div>
   </section>
 
@@ -110,7 +110,7 @@
     <div class="contagem" id="contagem" aria-live="assertive"></div>
   </section>
 
-  <!-- 5. Resultado e ranking geral -->
+  <!-- 5. Resultado e ranking do dia -->
   <section class="tela tela-resultado" data-tela="resultado">
     <h2 class="titulo-traco resultado-titulo">Fim de jogo!</h2>
     <div class="resultado-placar adesivo">
@@ -118,7 +118,7 @@
       <div><span class="numero" id="resultado-numero">0</span><span class="unidade">pontos</span></div>
     </div>
     <p class="resultado-posicao" id="resultado-posicao"></p>
-    <ol class="lista-ranking adesivo" id="resultado-ranking" aria-label="Ranking geral"></ol>
+    <ol class="lista-ranking adesivo" id="resultado-ranking" aria-label="Ranking do dia"></ol>
     <div class="resultado-acoes">
       <button class="botao botao-secundario" type="button" id="resultado-encerrar">Encerrar</button>
       <button class="botao" type="button" id="resultado-de-novo">Jogar de novo</button>
