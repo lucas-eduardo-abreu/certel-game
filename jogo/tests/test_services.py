@@ -173,9 +173,8 @@ class RankingTest(TestCase):
     def test_zera_a_cada_dia(self):
         """Partida de ontem fica salva, mas só conta no ranking de ontem."""
         ontem = criar_partida_finalizada(self.totem1, 9000, self.ana)
-        Partida.objects.filter(pk=ontem.pk).update(
-            finalizada_em=timezone.now() - timedelta(days=1)
-        )
+        um_dia_atras = timezone.now() - timedelta(days=1)
+        Partida.objects.filter(pk=ontem.pk).update(created_at=um_dia_atras, finalizada_em=um_dia_atras)
         criar_partida_finalizada(self.totem1, 100, self.ana)
         criar_partida_finalizada(self.totem2, 500, self.bia)
 
@@ -188,6 +187,19 @@ class RankingTest(TestCase):
             [r["pontuacao"] for r in services.montar_ranking(dia=dia_anterior)], [9000]
         )
         self.assertTrue(Partida.objects.filter(pk=ontem.pk).exists())
+
+    def test_partida_de_ontem_enviada_hoje_conta_para_ontem(self):
+        """A fila offline do totem envia hoje uma partida jogada ontem."""
+        atrasada = criar_partida_finalizada(self.totem1, 9000, self.ana)
+        Partida.objects.filter(pk=atrasada.pk).update(created_at=timezone.now() - timedelta(days=1))
+        criar_partida_finalizada(self.totem2, 500, self.bia)
+
+        self.assertEqual([r["nome"] for r in services.montar_ranking()], ["Bia"])
+        self.assertEqual(services.posicao_do_jogador(self.ana), (None, 0))
+        dia_anterior = timezone.localdate() - timedelta(days=1)
+        self.assertEqual(
+            [r["pontuacao"] for r in services.montar_ranking(dia=dia_anterior)], [9000]
+        )
 
     def test_melhor_partida_de_cada_jogador(self):
         """Cada jogador aparece uma vez, com a melhor pontuação, somando os totens."""

@@ -202,8 +202,8 @@ def _melhores_partidas(dia=None):
     """Monta o queryset com a melhor partida de cada jogador.
 
     Args:
-        dia: Só partidas finalizadas neste dia (fuso do evento); ``None``
-            considera todos os dias.
+        dia: Só partidas jogadas (iniciadas) neste dia, no fuso do evento;
+            ``None`` considera todos os dias.
 
     Returns:
         QuerySet: Partidas finalizadas e visíveis, uma por jogador,
@@ -211,7 +211,7 @@ def _melhores_partidas(dia=None):
     """
     visiveis = _partidas_validas()
     if dia is not None:
-        visiveis = visiveis.filter(finalizada_em__date=dia)
+        visiveis = visiveis.filter(created_at__date=dia)
     melhor_do_jogador = (
         visiveis.filter(jogador=OuterRef("jogador"))
         .order_by("-pontuacao", "finalizada_em", "pk")
@@ -226,7 +226,11 @@ def montar_ranking(limite=TAMANHO_RANKING, dia=None):
     """Monta o ranking do dia, somando os três totens.
 
     O ranking zera à meia-noite (fuso do evento): só contam as partidas
-    finalizadas no dia. As dos dias anteriores continuam salvas no banco.
+    jogadas no dia. As dos dias anteriores continuam salvas no banco.
+
+    O dia é o do início da partida, que sempre passa pelo servidor. A
+    finalização pode chegar atrasada (fila offline do totem), e uma partida de
+    ontem enviada hoje não pode entrar no ranking de hoje.
 
     Args:
         limite: Quantidade de posições; por padrão, o top 5.
@@ -282,14 +286,14 @@ def _partidas_validas():
 
 
 def dias_com_partidas():
-    """Lista os dias (no fuso do evento) em que houve partidas válidas.
+    """Lista os dias (no fuso do evento) em que houve partidas válidas jogadas.
 
     Returns:
         list[date]: Dias do mais recente para o mais antigo.
     """
     return list(
         _partidas_validas()
-        .annotate(dia=TruncDate("finalizada_em"))
+        .annotate(dia=TruncDate("created_at"))
         .values_list("dia", flat=True)
         .distinct()
         .order_by("-dia")
@@ -358,7 +362,7 @@ def sorteio_encerrado(tipo, dia=None):
 def participantes_do_sorteio(tipo, dia=None):
     """Jogadores que concorrem na roleta.
 
-    No diário, quem tem partida válida finalizada no dia; no geral, quem tem
+    No diário, quem tem partida válida jogada no dia; no geral, quem tem
     qualquer partida válida, ou só o top N do ranking quando
     ``sorteio_geral_top`` estiver configurado. Quem já ganhou no mesmo escopo
     fica de fora (no top N, a vaga não passa para o próximo do ranking).
@@ -373,7 +377,7 @@ def participantes_do_sorteio(tipo, dia=None):
     dia = _escopo_do_sorteio(tipo, dia)
     partidas = _partidas_validas()
     if dia is not None:
-        partidas = partidas.filter(finalizada_em__date=dia)
+        partidas = partidas.filter(created_at__date=dia)
     else:
         top = ConfiguracaoJogo.carregar().sorteio_geral_top
         if top:

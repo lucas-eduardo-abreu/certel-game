@@ -15,7 +15,7 @@ from .fabricas import criar_partida_finalizada, criar_totem, criar_usuario_ranki
 
 
 def no_dia(partida, dia, hora=12):
-    """Move a finalização da partida para um dia, no fuso do evento.
+    """Move a partida (início e fim) para um dia, no fuso do evento.
 
     Args:
         partida: Partida a ajustar.
@@ -23,7 +23,7 @@ def no_dia(partida, dia, hora=12):
         hora: Hora local da finalização.
     """
     momento = timezone.make_aware(datetime(dia.year, dia.month, dia.day, hora))
-    Partida.objects.filter(pk=partida.pk).update(finalizada_em=momento)
+    Partida.objects.filter(pk=partida.pk).update(created_at=momento, finalizada_em=momento)
 
 
 class SorteioServiceTest(TestCase):
