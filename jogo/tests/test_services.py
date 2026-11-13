@@ -17,6 +17,12 @@ class NormalizacaoTest(TestCase):
         self.assertEqual(services.normalizar_telefone("(51) 99988-7766"), "51999887766")
         self.assertEqual(services.normalizar_telefone(None), "")
 
+    def test_formatar_telefone(self):
+        """Celular, fixo e tamanho fora do padrão."""
+        self.assertEqual(services.formatar_telefone("51999887766"), "(51) 99988-7766")
+        self.assertEqual(services.formatar_telefone("5137123456"), "(51) 3712-3456")
+        self.assertEqual(services.formatar_telefone(""), "")
+
     def test_normalizar_nome(self):
         """Espaços extras somem e as iniciais ficam maiúsculas."""
         self.assertEqual(services.normalizar_nome("  MARIA   DA  SILVA "), "Maria Da Silva")

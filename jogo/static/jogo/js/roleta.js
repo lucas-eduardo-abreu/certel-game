@@ -143,7 +143,7 @@
     sorteios.forEach(function (s) {
       var li = elemento('li');
       li.appendChild(elemento('span', 'nome', s.nome));
-      if (s.telefone_final) { li.appendChild(elemento('span', 'telefone', 'final ' + s.telefone_final)); }
+      if (s.telefone) { li.appendChild(elemento('span', 'telefone', s.telefone)); }
       ol.appendChild(li);
     });
   }
@@ -229,7 +229,7 @@
 
   function mostrarVencedor(sorteio) {
     $('#roleta-resultado-nome').textContent = sorteio.nome;
-    var info = sorteio.telefone_final ? 'Telefone final ' + sorteio.telefone_final + ' · ' : '';
+    var info = sorteio.telefone ? 'Telefone ' + sorteio.telefone + ' · ' : '';
     info += 'entre ' + sorteio.participantes.toLocaleString('pt-BR') + ' participantes';
     $('#roleta-resultado-info').textContent = info;
     $('#roleta-resultado').hidden = false;

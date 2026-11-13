@@ -190,6 +190,7 @@ class RoletaApiTest(TestCase):
         sorteio = resposta.json()["sorteio"]
         self.assertEqual(sorteio["nome"], "Ana Souza")
         self.assertEqual(sorteio["nome_curto"], "Ana S.")
+        self.assertEqual(sorteio["telefone"], "(51) 99988-7766")
         self.assertEqual(sorteio["telefone_final"], "7766")
         self.assertEqual(sorteio["participantes"], 3)
         self.assertEqual(Sorteio.objects.get().realizado_por, self.usuario)

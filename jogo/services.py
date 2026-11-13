@@ -51,6 +51,22 @@ def normalizar_telefone(valor):
     return re.sub(r"\D", "", valor or "")
 
 
+def formatar_telefone(digitos):
+    """Formata um telefone só com dígitos para exibição.
+
+    Args:
+        digitos: Telefone com DDD, só dígitos (10 ou 11).
+
+    Returns:
+        str: ``(51) 99988-7766`` ou ``(51) 3712-3456``; outro tamanho volta como veio.
+    """
+    if len(digitos) == 11:
+        return f"({digitos[:2]}) {digitos[2:7]}-{digitos[7:]}"
+    if len(digitos) == 10:
+        return f"({digitos[:2]}) {digitos[2:6]}-{digitos[6:]}"
+    return digitos
+
+
 def normalizar_nome(valor):
     """Padroniza o nome digitado no totem.
 

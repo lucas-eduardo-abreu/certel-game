@@ -77,7 +77,8 @@
 
 .roleta-ganhadores li {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  /* O nome encolhe (com reticências) para o telefone completo caber. */
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.8vw;
   padding: 0.8vh 1.2vw;
@@ -114,7 +115,8 @@
 
 .roleta-ganhadores .telefone {
   color: #5b647c;
-  font-size: 2vh;
+  font-size: 2.2vh;
+  white-space: nowrap;
 }
 
 /* Palco do sorteio */

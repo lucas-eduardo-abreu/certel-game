@@ -168,13 +168,15 @@ def _sorteio_json(sorteio):
         sorteio: Sorteio com o vencedor carregado.
 
     Returns:
-        dict: Nome completo, nome curto, final do telefone e quantos concorreram.
+        dict: Nome completo, nome curto, telefone completo (para a equipe ligar
+        e combinar o prêmio na hora), final do telefone e quantos concorreram.
     """
     vencedor = sorteio.vencedor
     return {
         "id": str(sorteio.pk),
         "nome": vencedor.nome,
         "nome_curto": vencedor.nome_publico,
+        "telefone": services.formatar_telefone(vencedor.telefone),
         "telefone_final": vencedor.telefone[-4:],
         "participantes": sorteio.participantes,
         "quando": sorteio.created_at.isoformat(),
